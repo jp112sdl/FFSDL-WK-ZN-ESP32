@@ -13,8 +13,9 @@ TwoWire RTCWire = TwoWire(1);
 #define RTC_I2C_SCL_PIN   4
 #define RTC_I2C_SDA_PIN  15
 
-const char* ssid     = "FFSDL-WK";
-const char* password = "12345678";
+#include "secrets.h"
+const char* ssid     = WIFI_SSID;
+const char* password = WIFI_PSK;
 
 //#define NOLCD
 
