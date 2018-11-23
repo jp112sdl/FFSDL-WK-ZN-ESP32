@@ -34,7 +34,7 @@ const char* password = WIFI_PSK;
 #define ZIEL4_STOP_PIN   18
 
 #define HUPE_PIN         32
-#define DELETE_CSV_PIN   35
+#define DELETE_CSV_PIN   12
 #define STATUS_LED1_PIN  34
 #define STATUS_LED2_PIN  39
 
@@ -56,7 +56,7 @@ AsyncWebServer webServer(80);
 #define WEBPAGE_REFRESH_TIME  "2" //alle x Sekunden wird die Seite aktualisiert
 
 #define CSV_FILE   "/zeiten.csv"
-#define CSV_HEADER "Datum;Uhrzeit;BahnI li;BahnI re;BahnII li;BahnII re"
+#define CSV_HEADER "Datum;Uhrzeit;BahnI li;BahnI re;BahnII li;BahnII re;"
 
 volatile unsigned long startMillis  = 0;
 volatile bool          resetPressed = false;
@@ -66,6 +66,7 @@ uint8_t      lastActiveRunningCount = 0;
 unsigned long            lastMillis = 0;
 uint8_t                        hupe = 0;
 bool                spiffsAvailable = false;
+bool                      noSaveCSV = false;
 
 typedef struct {
   volatile unsigned long StopMillis = 0;
@@ -102,7 +103,6 @@ void setup() {
   digitalWrite(STATUS_LED1_PIN, LOW);
   digitalWrite(STATUS_LED2_PIN, LOW);
 
-  RTCWire.begin(RTC_I2C_SDA_PIN, RTC_I2C_SCL_PIN, 100000);
   if (!SPIFFS.begin(true)) {
     Serial.println("SPIFFS Mount Failed");
     digitalWrite(STATUS_LED2_PIN, HIGH);
@@ -117,10 +117,11 @@ void setup() {
   }
 
   Ziel[0].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
-  Ziel[1].Enabled = (digitalRead(ZIEL2_ENABLE_PIN) == LOW);
-  Ziel[2].Enabled = (digitalRead(ZIEL3_ENABLE_PIN) == LOW);
-  Ziel[3].Enabled = (digitalRead(ZIEL4_ENABLE_PIN) == LOW);
+  Ziel[1].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
+  Ziel[2].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
+  Ziel[3].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
 
+  initRTC();
   initLCD();
   initISR();
 
@@ -131,7 +132,7 @@ void setup() {
   Serial.println(IP);
 
   initWebServer();
-  
+
   digitalWrite(STATUS_LED1_PIN, HIGH);
   Serial.println("Ready.");
 }
@@ -139,7 +140,6 @@ void setup() {
 void loop() {
   //RESET Taster wurde betätigt
   if (resetPressed) {
-    delay(50);
     resetPressed = false;
     startMillis = 0;
     for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
@@ -150,19 +150,29 @@ void loop() {
         LCD[i].print("00:00,000 m:s,ms");
       }
     }
+    Serial.println("RESET wurde betätigt!");
+    noSaveCSV = true;
     hupe = 4;
   }
 
+  //prüfen, ob alle Ziele gestoppt wurden
+  activeRunningCount = 0;
+  for (uint8_t _ziel = 0; _ziel < ZIEL_COUNT; _ziel++)
+    if (Ziel[_ziel].isRunning) activeRunningCount++;
+
   //START-Klappe wurde betätigt
   if (startPressed) {
-    delay(50);
     startPressed = false;
-    if (startMillis == 0) startMillis = millis();
-    for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
-      if (Ziel[i].Enabled && Ziel[i].StopMillis == 0)
-        Ziel[i].isRunning = true;
+    if (activeRunningCount == 0) {
+      if (startMillis == 0) startMillis = millis();
+      for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
+        if (Ziel[i].Enabled && Ziel[i].StopMillis == 0)
+          Ziel[i].isRunning = true;
+      }
+      Serial.println("START wurde betätigt!");
+      noSaveCSV = false;
+      hupe = 2;
     }
-    hupe = 2;
   }
 
   //Laufende Zeitmessung
@@ -176,36 +186,36 @@ void loop() {
     }
   }
 
-  //prüfen, ob alle Zielen gestoppt wurden, dann CSV schreiben
-  activeRunningCount = 0;
-  for (uint8_t _ziel = 0; _ziel < ZIEL_COUNT; _ziel++)
-    if (Ziel[_ziel].isRunning) activeRunningCount++;
-
+  // Alle Ziele gestoppt. Jetzt CSV speichern!
   if (activeRunningCount == 0 && lastActiveRunningCount > 0) {
-    // Alle Ziele gestoppt. Jetzt CSV speichern!
-
-    String csvLine = strRTCDateTime() + ";";
-    for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
-      if (Ziel[i].Enabled) {
-        csvLine += Ziel[i].Headline + ";" + ((Ziel[i].StopMillis > 0) ? millis2Anzeige(Ziel[i].StopMillis - startMillis) : "0") + ";";
-      } else {
-        csvLine += Ziel[i].Headline + ";00:00,000;";
+    if (noSaveCSV == true) {
+      Serial.println("- Fehlstart. CSV wird nicht geschrieben!");
+      noSaveCSV = false;
+    } else {
+      String csvLine = strRTCDate() + ";" + strRTCTime() + ";";
+      for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
+        if (Ziel[i].Enabled) {
+          csvLine += ((Ziel[i].StopMillis > 0) ? millis2Anzeige(Ziel[i].StopMillis - startMillis) : "0") + ";";
+        } else {
+          csvLine += "00:00,000;";
+        }
       }
+      writeCSV(CSV_FILE, csvLine);
     }
-    writeCSV(CSV_FILE, csvLine);
   }
+
   lastActiveRunningCount = activeRunningCount;
 
-
+  //Hupe
+  checkHupe();
+  
   //Debugmeldungen alle 2 Sekunden
   if (millis() - lastMillis > 2000) {
     lastMillis = millis();
     //Serial.println("Uhrzeit: " + strRTCDateTime());
     //Serial.println(String(activeRunningCount) + " Ziel(en) aktiv");
+    //Serial.println("DELETE CSV PIN = "+String(digitalRead(DELETE_CSV_PIN)));
   }
-
-  //Hupe
-  checkHupe();
 }
 
 void checkHupe() {
