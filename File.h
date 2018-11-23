@@ -4,16 +4,20 @@
 
 void deleteCSV(const char * fileName) {
   if (spiffsAvailable) {
-    if (SPIFFS.remove(fileName)) {
-      Serial.println("- file deleted");
-      for (uint8_t i = 0; i < 5; i++) {
-        digitalWrite(STATUS_LED1_PIN, !digitalRead(STATUS_LED1_PIN));
+    if (SPIFFS.exists(fileName)) {
+      if (SPIFFS.remove(fileName)) {
+        Serial.println("- file deleted");
+        for (uint8_t i = 0; i < 5; i++) {
+          digitalWrite(STATUS_LED1_PIN, !digitalRead(STATUS_LED1_PIN));
+          delay(300);
+        }
         delay(300);
+        digitalWrite(STATUS_LED1_PIN, LOW);
+      } else {
+        Serial.println("- delete failed");
       }
-      delay(300);
-      digitalWrite(STATUS_LED1_PIN, LOW);
     } else {
-      Serial.println("- delete failed");
+      Serial.println("- file does not exist. no need to delete");
     }
   } else {
     Serial.println("deleteCSV not done; SPIFFS not available!");
@@ -22,23 +26,28 @@ void deleteCSV(const char * fileName) {
 
 void writeCSV(const char * fileName, String &csvLine) {
   if (spiffsAvailable) {
-    File file = SPIFFS.open(fileName);
-    if (!file) {
+    Serial.println("- writing CSV file");
+    delay(50);
+    if (!SPIFFS.exists(fileName)) {
       Serial.println("- failed to open file - creating new");
-      file = SPIFFS.open(fileName, FILE_WRITE);
+      delay(50);
+      File file = SPIFFS.open(fileName, FILE_WRITE);
       if (!file) {
         Serial.println("- failed to open file for writing");
+        delay(50);
         return;
       } else {
         if (file.println(CSV_HEADER)) {
           file.close();
+          delay(50);
         } else {
           Serial.println("- failed to write line into file");
         }
       }
     }
 
-    file = SPIFFS.open(fileName, FILE_APPEND);
+    File file = SPIFFS.open(fileName, FILE_APPEND);
+    delay(50);
     if (!file) {
       Serial.println("- csv: failed to open file for appending");
     }
