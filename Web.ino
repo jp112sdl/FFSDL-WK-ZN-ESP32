@@ -26,13 +26,11 @@ void setTimeHtml(AsyncWebServerRequest *request) {
   page.replace("{uhrzeit}", strRTCDateTime());
 
   if (request->hasParam("btnSave")) {
-    Serial.println("Save button pressed.");
     AsyncWebParameter* p = request->getParam("btnSave");
     sc =  (p->value() == "1");
   }
 
   if (request->hasParam("zeit")) {
-    Serial.println("Web: zeit values!");
     AsyncWebParameter* p = request->getParam("zeit");
     char zeit[20];
     (p->value()).toCharArray(zeit, 20);
@@ -76,7 +74,6 @@ void defaultHtml(AsyncWebServerRequest *request) {
   page.replace ("{tableRows}", tableRows);
 
   if (request->hasParam("btnReset", true)) {
-    Serial.println("Web: Reset values!");
     AsyncWebParameter* p = request->getParam("btnReset", true);
     resetPressed = (p->value() == "1");
   }
