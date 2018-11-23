@@ -97,11 +97,11 @@ bool rtcSetFromString(char*zeit) {
   uint8_t sekunde = getIntFromString (zeit, 6);
   Serial.print("rtcSetFromString: ");
   Serial.println(zeit);
-  Serial.println("Tag: " + String(tag));
-  Serial.println("Monat: " + String(monat));
-  Serial.println("Jahr: " + String(jahr));
-  Serial.println("Stunde: " + String(stunde));
-  Serial.println("Minute: " + String(minute));
+  Serial.println("Tag:     " + String(tag));
+  Serial.println("Monat:   " + String(monat));
+  Serial.println("Jahr:    " + String(jahr));
+  Serial.println("Stunde : " + String(stunde));
+  Serial.println("Minute:  " + String(minute));
   Serial.println("Sekunde: " + String(sekunde));
 
   if (checkDateTime(jahr, monat, tag, stunde, minute, sekunde)) {
@@ -114,7 +114,7 @@ bool rtcSetFromString(char*zeit) {
   }
 }
 
-String strRTCDateTime() {
+String strRTCDate() {
   rtcReadTime();
   String result = "";
   if (tag < 10) {
@@ -128,7 +128,12 @@ String strRTCDateTime() {
   result += monat;
   result += ".";
   result += jahr;
-  result += " ";
+  return result;
+}
+
+String strRTCTime() {
+  rtcReadTime();
+  String result = "";
   if (stunde < 10) {
     result += "0";
   }
@@ -145,3 +150,13 @@ String strRTCDateTime() {
   result += sekunde;
   return result;
 }
+
+String strRTCDateTime() {
+  return strRTCDate() + " " + strRTCTime();
+}
+
+void initRTC() {
+  RTCWire.begin(RTC_I2C_SDA_PIN, RTC_I2C_SCL_PIN, 100000);
+  Serial.println("RTC Init done. Time = "+strRTCDateTime());
+}
+
