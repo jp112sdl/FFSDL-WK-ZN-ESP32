@@ -3,22 +3,26 @@
 //
 
 void isrZiel1Stop() {
-  Ziel[0].StopMillis = millis();
+  if (Ziel[0].isRunning)
+    Ziel[0].StopMillis = millis();
   Ziel[0].isRunning = false;
 }
 
 void isrZiel2Stop() {
-  Ziel[1].StopMillis = millis();
+  if (Ziel[1].isRunning)
+    Ziel[1].StopMillis = millis();
   Ziel[1].isRunning = false;
 }
 
 void isrZiel3Stop() {
-  Ziel[2].StopMillis = millis();
+  if (Ziel[2].isRunning)
+    Ziel[2].StopMillis = millis();
   Ziel[2].isRunning = false;
 }
 
 void isrZiel4Stop() {
-  Ziel[3].StopMillis = millis();
+  if (Ziel[3].isRunning)
+    Ziel[3].StopMillis = millis();
   Ziel[3].isRunning = false;
 }
 
