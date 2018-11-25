@@ -120,9 +120,9 @@ void setup() {
   }
 
   Ziel[0].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
-  Ziel[1].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
-  Ziel[2].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
-  Ziel[3].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
+  Ziel[1].Enabled = (digitalRead(ZIEL2_ENABLE_PIN) == LOW);
+  Ziel[2].Enabled = (digitalRead(ZIEL3_ENABLE_PIN) == LOW);
+  Ziel[3].Enabled = (digitalRead(ZIEL4_ENABLE_PIN) == LOW);
 
   initRTC();
   initLCD();
