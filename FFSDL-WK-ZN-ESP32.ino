@@ -4,6 +4,7 @@
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
+#include <DNSServer.h>
 #include <LiquidCrystal_I2C.h>
 #include "FS.h"
 #include "SPIFFS.h"
@@ -53,6 +54,8 @@ LiquidCrystal_I2C lcd4(0x24, LCD_COLUMNS, LCD_ROWS); //zwei rechts
 LiquidCrystal_I2C LCD[ZIEL_COUNT] = { lcd1, lcd2, lcd3, lcd4 };
 
 AsyncWebServer webServer(80);
+DNSServer dnsServer;
+
 #define WEBPAGE_REFRESH_TIME  "2" //alle x Sekunden wird die Seite aktualisiert
 
 #define CSV_FILE   "/zeiten.csv"
@@ -131,6 +134,8 @@ void setup() {
   Serial.print("AP IP address: ");
   Serial.println(IP);
 
+  dnsServer.start(53, "*", IP);
+
   initWebServer();
 
   digitalWrite(STATUS_LED1_PIN, HIGH);
@@ -138,6 +143,8 @@ void setup() {
 }
 
 void loop() {
+  dnsServer.processNextRequest();
+
   //RESET Taster wurde betätigt
   if (resetPressed) {
     resetPressed = false;
@@ -208,7 +215,7 @@ void loop() {
 
   //Hupe
   checkHupe();
-  
+
   //Debugmeldungen alle 2 Sekunden
   if (millis() - lastMillis > 2000) {
     lastMillis = millis();
