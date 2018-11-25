@@ -38,11 +38,11 @@ void writeCSV(const char * fileName, String &csvLine) {
         return;
       } else {
         if (file.println(CSV_HEADER)) {
-          file.close();
-          delay(50);
         } else {
           Serial.println("- failed to write line into file");
         }
+        file.close();
+        delay(50);
       }
     }
 
