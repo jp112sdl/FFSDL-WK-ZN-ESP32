@@ -273,7 +273,8 @@ String millis2Anzeige(unsigned long _millis) {
   _t += ":";
   _t += (sekunde < 10) ? "0" + String(sekunde) : String(sekunde);
   _t += ",";
-  _t += (millisekunde < 100) ? ((millisekunde < 10) ?  "00" + String(millisekunde) : "0") : String(millisekunde);
+  _t += (millisekunde < 100) ? ((millisekunde < 10) ?  "00" + String(millisekunde) : "0" + String(millisekunde)) : String(millisekunde);
   return _t;
 }
+
 
