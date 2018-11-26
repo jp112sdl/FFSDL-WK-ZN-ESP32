@@ -3,6 +3,7 @@
 //
 
 #include "Web_CSS.h"
+#include "Web_JS.h"
 #include "Web_HTML.h"
 
 void initWebServer() {
@@ -12,10 +13,36 @@ void initWebServer() {
     ESP.restart();
   });
 
+  webServer.on("/deletecsv", HTTP_GET, [](AsyncWebServerRequest * request) {
+    uint8_t ret =  deleteCSV(CSV_FILE);
+    request->send(200, "text/plain", "Delete CSV returned " + String(ret));
+  });
+
+
   webServer.on("/setTime", HTTP_GET, setTimeHtml);
+  webServer.on("/getValues", HTTP_GET, getValues);
   webServer.onNotFound(defaultHtml);
 
   webServer.begin();
+}
+
+void getValues(AsyncWebServerRequest *request) {
+  String json = "{";
+  json += "\"uhrzeit\": \"" + strRTCDateTime() + "\"";
+
+  json += ", \"ziele\": [";
+
+
+  uint8_t j = 0;
+  for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
+    if (Ziel[i].Enabled) {
+      j++;
+      json += ((j > 1) ? ", \"" : String("\""))  + millis2Anzeige(((Ziel[i].isRunning) ? millis() : Ziel[i].StopMillis) - startMillis) + "\"";
+    }
+  }
+
+  json += "]}";
+  request->send(200, "text/json", json);
 }
 
 void setTimeHtml(AsyncWebServerRequest *request) {
@@ -24,6 +51,7 @@ void setTimeHtml(AsyncWebServerRequest *request) {
   String page = FPSTR(HTTP_SETTIME);
   page.replace("{css_style}", FPSTR(HTTP_CSS));
   page.replace("{uhrzeit}", strRTCDateTime());
+  page.replace("{js}", FPSTR(HTTP_JS));
 
   if (request->hasParam("btnSave")) {
     AsyncWebParameter* p = request->getParam("btnSave");
@@ -59,15 +87,18 @@ void defaultHtml(AsyncWebServerRequest *request) {
   page.replace("{css_style}", FPSTR(HTTP_CSS));
   page.replace("{refreshTime}", WEBPAGE_REFRESH_TIME);
   page.replace("{uhrzeit}", strRTCDateTime());
+  page.replace("{js}", FPSTR(HTTP_JS));
 
   String tableRows = "";
-
+  uint8_t j = 0;
   for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
     if (Ziel[i].Enabled) {
       tableRows += "<tr>";
-      tableRows += "<td class='tdl " + String((Ziel[i].isRunning) ? "red" : ((Ziel[i].StopMillis > 0) ? "green" : "black")) + "'>" + Ziel[i].Headline + "</td>";
-      tableRows += "<td class='tdr'>" + millis2Anzeige(((Ziel[i].isRunning) ? millis() : Ziel[i].StopMillis) - startMillis) + "</td>";
+      //tableRows += "<td class='tdl " + String((Ziel[i].isRunning) ? "red" : ((Ziel[i].StopMillis > 0) ? "green" : "black")) + "'>" + Ziel[i].Headline + "</td>";
+      tableRows += "<td class='tdl'>" + Ziel[i].Headline + "</td>";
+      tableRows += "<td id='_ziel" + String(j) + "' class='tdr'>" + millis2Anzeige(((Ziel[i].isRunning) ? millis() : Ziel[i].StopMillis) - startMillis) + "</td>";
       tableRows += "</tr>";
+      j++;
     }
   }
 
@@ -79,7 +110,7 @@ void defaultHtml(AsyncWebServerRequest *request) {
   }
 
   if (request->hasParam("filename")) {
-    if (request->hasArg("download")) { 
+    if (request->hasArg("download")) {
       Serial.println("Download Filename: " + request->arg("filename"));
       AsyncWebServerResponse *response = request->beginResponse(SPIFFS, request->arg("filename"), String(), true);
       response->addHeader("Server", "ESP Async Web Server");

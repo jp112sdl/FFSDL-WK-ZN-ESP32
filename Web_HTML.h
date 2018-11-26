@@ -7,13 +7,13 @@ const char HTTP_DEFAULT[] PROGMEM = R"=====(
 <html lang="en">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <meta http-equiv="Refresh" content="{refreshTime}">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Wettkampf Zeitnahme</title>
     {css_style}
   </head>
   <body>
     <div style='text-align:left;display:inline-block;min-width:260px;'>
-    <div class='c'>{uhrzeit}</div>
+    <div id='_uhrzeit' class='c'>{uhrzeit}</div>
     <hr/>
     <div> <table>
       {tableRows}
@@ -21,13 +21,14 @@ const char HTTP_DEFAULT[] PROGMEM = R"=====(
      </div> 
       <hr />
       <div><form action="/" method="post">
-      <button name='btnReset' value='1' type='submit'>Zeit Reset</button></form></div>
+      <button class='redbtn' name='btnReset' value='1' type='submit'>Zeit Reset</button></form></div>
       <hr />
       <div></div>
       <div><input class='lnkbtn' type='button' value='Uhrzeit stellen' onclick="window.location.href='/setTime'" /></div>
       <hr/>
        <div></div>
       <div><input class='lnkbtn' type='button' value='Download CSV' onclick="window.location.href='/?download&filename=/zeiten.csv'" /></div>
+      {js}
     </div>
   </body>
 </html>
@@ -44,7 +45,7 @@ const char HTTP_SETTIME[] PROGMEM = R"=====(
   </head>
   <body>
     <div style='text-align:left;display:inline-block;min-width:260px;'>
-    <div class='c'>{uhrzeit}</div>
+    <div id='_uhrzeit' class='c'>{uhrzeit}</div>
     <hr/>
      <div>
       <form action="/setTime" method="get">
@@ -64,6 +65,7 @@ const char HTTP_SETTIME[] PROGMEM = R"=====(
       </form>
       <div class='l c'>{sl}</div>
      </div>
+     {js}
     </div>
   </body>
 </html>
