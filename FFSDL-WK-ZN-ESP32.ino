@@ -59,7 +59,17 @@ DNSServer dnsServer;
 #define WEBPAGE_REFRESH_TIME  "2" //alle x Sekunden wird die Seite aktualisiert
 
 #define CSV_FILE   "/zeiten.csv"
+#define CSV_CREATE_BACKUP_ON_DELETE true
 #define CSV_HEADER "Datum;Uhrzeit;BahnI li;BahnI re;BahnII li;BahnII re;"
+
+enum SPIFFS_ERRORS {
+  NO_ERROR             = 0,
+  DELETE_FAILED        = 10,
+  RENAME_FAILED        = 11,
+  FILE_DOES_NOT_EXIST  = 2,
+  RENAME_SUCCESSFUL    = 4,
+  SPIFFS_NOT_AVAILABLE = 99
+};
 
 volatile unsigned long startMillis  = 0;
 volatile bool          resetPressed = false;
@@ -79,6 +89,7 @@ typedef struct {
 } zielType;
 zielType Ziel[ZIEL_COUNT];
 
+#include "HelpFunctions.h"
 #include "ISR.h"
 #include "RTC.h"
 #include "File.h"
@@ -116,7 +127,7 @@ void setup() {
   }
 
   if (digitalRead(DELETE_CSV_PIN) == LOW) {
-    deleteCSV(CSV_FILE);
+    deleteCSV(CSV_FILE, CSV_CREATE_BACKUP_ON_DELETE);
   }
 
   Ziel[0].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
