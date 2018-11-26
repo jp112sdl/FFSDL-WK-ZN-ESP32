@@ -171,12 +171,14 @@ void loop() {
   if (startPressed) {
     startPressed = false;
     if (activeRunningCount == 0) {
-      if (startMillis == 0) startMillis = millis();
+      if (startMillis == 0) {
+        startMillis = millis();
+        Serial.println("START wurde betätigt!");
+      }
       for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
         if (Ziel[i].Enabled && Ziel[i].StopMillis == 0)
           Ziel[i].isRunning = true;
       }
-      Serial.println("START wurde betätigt!");
       noSaveCSV = false;
       hupe = 2;
     }
@@ -232,8 +234,10 @@ void checkHupe() {
     if (hupe > 0) {
       hupe--;
       digitalWrite(HUPE_PIN, !digitalRead(HUPE_PIN));
+      //Serial.println("HUPE TOGGLE " + String(millis()));
     } else {
       digitalWrite(HUPE_PIN, LOW);
+      //Serial.println("HUPE AUS " + String(millis()));
     }
   }
 }
