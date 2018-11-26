@@ -2,7 +2,7 @@
 // 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //
 
-void deleteCSV(const char * fileName) {
+uint8_t IRAM_ATTR deleteCSV(const char * fileName) {
   if (spiffsAvailable) {
     if (SPIFFS.exists(fileName)) {
       if (SPIFFS.remove(fileName)) {
@@ -13,28 +13,29 @@ void deleteCSV(const char * fileName) {
         }
         delay(300);
         digitalWrite(STATUS_LED1_PIN, LOW);
+        return 0;
       } else {
         Serial.println("- delete failed");
+        return 1;
       }
     } else {
       Serial.println("- file does not exist. no need to delete");
+      return 2;
     }
   } else {
     Serial.println("deleteCSV not done; SPIFFS not available!");
+    return 3;
   }
 }
 
-void writeCSV(const char * fileName, String &csvLine) {
+void IRAM_ATTR writeCSV(const char * fileName, String &csvLine) {
   if (spiffsAvailable) {
     Serial.println("- writing CSV file");
-    delay(50);
     if (!SPIFFS.exists(fileName)) {
       Serial.println("- failed to open file - creating new");
-      delay(50);
       File file = SPIFFS.open(fileName, FILE_WRITE);
       if (!file) {
         Serial.println("- failed to open file for writing");
-        delay(50);
         return;
       } else {
         if (file.println(CSV_HEADER)) {
@@ -42,12 +43,10 @@ void writeCSV(const char * fileName, String &csvLine) {
           Serial.println("- failed to write line into file");
         }
         file.close();
-        delay(50);
       }
     }
 
     File file = SPIFFS.open(fileName, FILE_APPEND);
-    delay(50);
     if (!file) {
       Serial.println("- csv: failed to open file for appending");
     }
