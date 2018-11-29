@@ -14,7 +14,7 @@ void initWebServer() {
   });
 
   webServer.on("/deletecsv", HTTP_GET, [](AsyncWebServerRequest * request) {
-    uint8_t ret =  deleteCSV(CSV_FILE, CSV_CREATE_BACKUP_ON_DELETE);
+    uint8_t ret =  deleteCSV(CSV_FILENAME, CSV_CREATE_BACKUP_ON_DELETE);
     request->send(200, "text/plain", "Delete CSV returned " + String(ret));
   });
 
