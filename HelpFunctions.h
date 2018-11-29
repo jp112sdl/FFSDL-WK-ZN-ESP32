@@ -1,4 +1,4 @@
-String millis2Anzeige(unsigned long _millis) {
+static inline String millis2Anzeige(unsigned long _millis) {
   uint16_t millisekunde = _millis % 1000;
   uint8_t sekunde = (_millis / 1000) % 60;
   uint8_t minute  = (_millis / 60000) % 60;
