@@ -18,7 +18,7 @@ TwoWire RTCWire = TwoWire(1);
 const char* ssid     = WIFI_SSID;
 const char* password = WIFI_PSK;
 
-//#define NOLCD
+//#define NOLCD  //nur für Debugging ohne angeschlossene LCD Displays
 
 #define ZIEL_COUNT        4
 
@@ -56,11 +56,11 @@ LiquidCrystal_I2C LCD[ZIEL_COUNT] = { lcd1, lcd2, lcd3, lcd4 };
 AsyncWebServer webServer(80);
 DNSServer dnsServer;
 
-#define WEBPAGE_REFRESH_TIME  "2" //alle x Sekunden wird die Seite aktualisiert
+#define WEBPAGE_REFRESH_TIME        "2" //alle x Sekunden wird die Seite aktualisiert
 
-#define CSV_FILE   "/zeiten.csv"
+#define CSV_FILENAME                "/zeiten.csv"
 #define CSV_CREATE_BACKUP_ON_DELETE true
-#define CSV_HEADER "Datum;Uhrzeit;BahnI li;BahnI re;BahnII li;BahnII re;"
+#define CSV_HEADER                  "Datum;Uhrzeit;BahnI li;BahnI re;BahnII li;BahnII re;"
 
 enum SPIFFS_ERRORS {
   NO_ERROR             = 0,
@@ -93,6 +93,7 @@ zielType Ziel[ZIEL_COUNT];
 #include "ISR.h"
 #include "RTC.h"
 #include "File.h"
+#include "LCD.h"
 
 void setup() {
   Serial.begin(57600);
@@ -127,7 +128,7 @@ void setup() {
   }
 
   if (digitalRead(DELETE_CSV_PIN) == LOW) {
-    deleteCSV(CSV_FILE, CSV_CREATE_BACKUP_ON_DELETE);
+    deleteCSV(CSV_FILENAME, CSV_CREATE_BACKUP_ON_DELETE);
   }
 
   Ziel[0].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
@@ -164,8 +165,7 @@ void loop() {
       if (Ziel[i].Enabled) {
         Ziel[i].StopMillis = 0;
         Ziel[i].isRunning = false;
-        LCD[i].setCursor(0, 1);
-        LCD[i].print("00:00,000 m:s,ms");
+        printLcdTime(i, 0);
       }
     }
     Serial.println("RESET wurde betätigt!");
@@ -199,9 +199,7 @@ void loop() {
   if (startMillis > 0)  {
     for (uint8_t _ziel = 0; _ziel < ZIEL_COUNT; _ziel++) {
       if (Ziel[_ziel].Enabled) {
-        String zeit = millis2Anzeige(((Ziel[_ziel].isRunning) ? millis() : Ziel[_ziel].StopMillis) - startMillis);
-        LCD[_ziel].setCursor(0, 1);
-        LCD[_ziel].print(zeit);
+        printLcdTime(_ziel, ((Ziel[_ziel].isRunning) ? millis() : Ziel[_ziel].StopMillis) - startMillis);
       }
     }
   }
@@ -217,10 +215,10 @@ void loop() {
         if (Ziel[i].Enabled) {
           csvLine += ((Ziel[i].StopMillis > 0) ? millis2Anzeige(Ziel[i].StopMillis - startMillis) : "0") + ";";
         } else {
-          csvLine += "00:00,000;";
+          csvLine += millis2Anzeige(0)+";";
         }
       }
-      writeCSV(CSV_FILE, csvLine);
+      writeCSV(CSV_FILENAME, csvLine);
     }
   }
 
@@ -251,28 +249,5 @@ void checkHupe() {
       //Serial.println("HUPE AUS " + String(millis()));
     }
   }
-}
-
-void initLCD() {
-  Ziel[0].Headline = ZIEL1_HEADLINE;
-  Ziel[1].Headline = ZIEL2_HEADLINE;
-  Ziel[2].Headline = ZIEL3_HEADLINE;
-  Ziel[3].Headline = ZIEL4_HEADLINE;
-#ifndef NOLCD
-  for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
-    Serial.println("Ziel " + String(i + 1) + " " + (Ziel[i].Enabled == true ? "" : "de") + "aktiviert");
-    LCD[i].init();
-    LCD[i].clear();
-    LCD[i].noBacklight();
-    if (Ziel[i].Enabled) {
-      LCD[i].backlight();
-      LCD[i].setCursor(0, 0);
-      LCD[i].print(Ziel[i].Headline);
-      LCD[i].setCursor(0, 1);
-      LCD[i].print("00:00,000 m:s,ms");
-    }
-  }
-  Serial.println("LCD Init done.");
-#endif
 }
 
