@@ -94,6 +94,7 @@ zielType Ziel[ZIEL_COUNT];
 #include "RTC.h"
 #include "File.h"
 #include "LCD.h"
+#include "Web.h"
 
 void setup() {
   Serial.begin(57600);
