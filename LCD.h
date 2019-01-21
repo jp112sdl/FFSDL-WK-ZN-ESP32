@@ -1,3 +1,6 @@
+#ifndef __LCD__H_
+#define __LCD__H_
+
 void printLcdTime(uint8_t lcdNum, unsigned long t) {
 #ifndef NOLCD
   LCD[lcdNum].setCursor(0, 1);
@@ -27,3 +30,4 @@ void initLCD() {
   Serial.println("LCD Init done.");
 #endif
 }
+#endif

@@ -1,6 +1,8 @@
 //
 // 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //
+#ifndef __RTC__H_
+#define __RTC__H_
 
 int jahr, monat, tag, stunde, minute, sekunde, wochentag;
 int daysInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -160,3 +162,4 @@ void initRTC() {
   Serial.println("RTC Init done. Time = "+strRTCDateTime());
 }
 
+#endif

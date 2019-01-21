@@ -2,6 +2,9 @@
 // 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //
 
+#ifndef __ISR__H_
+#define __ISR__H_
+
 void IRAM_ATTR isrZiel1Stop() {
   if (Ziel[0].isRunning)
     Ziel[0].StopMillis = millis();
@@ -43,3 +46,4 @@ void initISR() {
   attachInterrupt(ZIEL4_STOP_PIN, isrZiel4Stop, FALLING);
   Serial.println("ISR Init done.");
 }
+#endif

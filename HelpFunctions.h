@@ -1,3 +1,6 @@
+#ifndef __HELPFUNCTIONS__H_
+#define __HELPFUNCTIONS__H_
+
 static inline String millis2Anzeige(unsigned long _millis) {
   uint16_t millisekunde = _millis % 1000;
   uint8_t sekunde = (_millis / 1000) % 60;
@@ -18,3 +21,4 @@ void blinkStatusLed(uint8_t LED_PIN, uint8_t cnt) {
   delay(300);
   digitalWrite(LED_PIN, LOW);
 }
+#endif

@@ -2,6 +2,9 @@
 // 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //
 
+#ifndef __FILE__H_
+#define __FILE__H_
+
 uint8_t IRAM_ATTR deleteCSV(const char * fileName, bool createBackup) {
   if (spiffsAvailable) {
     if (SPIFFS.exists(fileName)) {
@@ -75,3 +78,4 @@ void IRAM_ATTR writeCSV(const char * fileName, String &csvLine) {
     Serial.println("writeCSV not done; SPIFFS not available!");
   }
 }
+#endif
