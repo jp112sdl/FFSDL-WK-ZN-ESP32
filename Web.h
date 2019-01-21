@@ -1,48 +1,12 @@
 //
 // 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //
+#ifndef __WEB__H_
+#define __WEB__H_
 
 #include "Web_CSS.h"
 #include "Web_JS.h"
 #include "Web_HTML.h"
-
-void initWebServer() {
-  webServer.on("/restart", HTTP_GET, [](AsyncWebServerRequest * request) {
-    request->send(200, "text/plain", "rebooting");
-    delay(100);
-    ESP.restart();
-  });
-
-  webServer.on("/deletecsv", HTTP_GET, [](AsyncWebServerRequest * request) {
-    uint8_t ret =  deleteCSV(CSV_FILENAME, CSV_CREATE_BACKUP_ON_DELETE);
-    request->send(200, "text/plain", "Delete CSV returned " + String(ret));
-  });
-
-  webServer.on("/setTime", HTTP_GET, setTimeHtml);
-  webServer.on("/getValues", HTTP_GET, getValues);
-  webServer.onNotFound(defaultHtml);
-
-  webServer.begin();
-}
-
-void getValues(AsyncWebServerRequest *request) {
-  String json = "{";
-  json += "\"uhrzeit\": \"" + strRTCDateTime() + "\"";
-
-  json += ", \"ziele\": [";
-
-
-  uint8_t j = 0;
-  for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
-    if (Ziel[i].Enabled) {
-      j++;
-      json += ((j > 1) ? ", \"" : String("\""))  + millis2Anzeige(((Ziel[i].isRunning) ? millis() : Ziel[i].StopMillis) - startMillis) + "\"";
-    }
-  }
-
-  json += "]}";
-  request->send(200, "text/json", json);
-}
 
 void setTimeHtml(AsyncWebServerRequest *request) {
   bool saveSuccess = false;
@@ -77,6 +41,26 @@ void setTimeHtml(AsyncWebServerRequest *request) {
   AsyncWebServerResponse *response = request->beginResponse(200);
   response->addHeader("Content-Length", String(page.length()));
   request->send(200, "text/html", page);
+}
+
+
+void getValues(AsyncWebServerRequest *request) {
+  String json = "{";
+  json += "\"uhrzeit\": \"" + strRTCDateTime() + "\"";
+
+  json += ", \"ziele\": [";
+
+
+  uint8_t j = 0;
+  for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
+    if (Ziel[i].Enabled) {
+      j++;
+      json += ((j > 1) ? ", \"" : String("\""))  + millis2Anzeige(((Ziel[i].isRunning) ? millis() : Ziel[i].StopMillis) - startMillis) + "\"";
+    }
+  }
+
+  json += "]}";
+  request->send(200, "text/json", json);
 }
 
 void defaultHtml(AsyncWebServerRequest *request) {
@@ -121,3 +105,23 @@ void defaultHtml(AsyncWebServerRequest *request) {
   response->addHeader("Content-Length", String(page.length()));
   request->send(200, "text/html", page);
 }
+
+void initWebServer() {
+  webServer.on("/restart", HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(200, "text/plain", "rebooting");
+    delay(100);
+    ESP.restart();
+  });
+
+  webServer.on("/deletecsv", HTTP_GET, [](AsyncWebServerRequest * request) {
+    uint8_t ret =  deleteCSV(CSV_FILENAME, CSV_CREATE_BACKUP_ON_DELETE);
+    request->send(200, "text/plain", "Delete CSV returned " + String(ret));
+  });
+
+  webServer.on("/setTime", HTTP_GET, setTimeHtml);
+  webServer.on("/getValues", HTTP_GET, getValues);
+  webServer.onNotFound(defaultHtml);
+
+  webServer.begin();
+}
+#endif
