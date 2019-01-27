@@ -1,6 +1,7 @@
 //
 // 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //
+//34, 35, 36, 39 only input pins
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
@@ -24,10 +25,11 @@ const char* password = WIFI_PSK;
 
 #define START_PIN        14
 #define RESET_PIN        19
+#define TIMER_PIN        36
 
-#define ZIEL1_ENABLE_PIN 33
+#define ZIEL1_ENABLE_PIN 34
 #define ZIEL1_STOP_PIN   16
-#define ZIEL2_ENABLE_PIN 25
+#define ZIEL2_ENABLE_PIN 39
 #define ZIEL2_STOP_PIN   17
 #define ZIEL3_ENABLE_PIN 26
 #define ZIEL3_STOP_PIN   5
@@ -36,8 +38,8 @@ const char* password = WIFI_PSK;
 
 #define HUPE_PIN         32
 #define DELETE_CSV_PIN   12
-#define STATUS_LED1_PIN  34
-#define STATUS_LED2_PIN  39
+#define STATUS_LED1_PIN  33
+#define STATUS_LED2_PIN  25
 
 #define HUPE_DAUER_MS    500
 
