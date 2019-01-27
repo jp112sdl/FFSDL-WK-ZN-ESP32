@@ -4,6 +4,7 @@
 //34, 35, 36, 39 only input pins
 
 #include <WiFi.h>
+#include <WiFiUdp.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
 #include <LiquidCrystal_I2C.h>
@@ -16,7 +17,7 @@ TwoWire RTCWire = TwoWire(1);
 #define RTC_I2C_SDA_PIN  15
 
 #include "secrets.h"
-const char* ssid     = WIFI_SSID;
+const char* ssid = WIFI_SSID;
 const char* password = WIFI_PSK;
 
 //#define NOLCD  //nur für Debugging ohne angeschlossene LCD Displays
@@ -43,6 +44,8 @@ const char* password = WIFI_PSK;
 
 #define HUPE_DAUER_MS    500
 
+#define TIMERSTARTCOMMAND "timerstart300"
+
 #define LCD_COLUMNS     16
 #define LCD_ROWS        2
 #define ZIEL1_HEADLINE "BahnI,Ziel <-Li "
@@ -58,6 +61,13 @@ LiquidCrystal_I2C LCD[ZIEL_COUNT] = { lcd1, lcd2, lcd3, lcd4 };
 AsyncWebServer webServer(80);
 DNSServer dnsServer;
 
+#define UDPPORT         112
+struct udp_t {
+  WiFiUDP UDP;
+  char incomingPacket[255];
+} UDPClient;
+IPAddress LEDPanel_IP(192, 168, 4, 112);
+
 #define WEBPAGE_REFRESH_TIME        "2" //alle x Sekunden wird die Seite aktualisiert
 
 #define CSV_FILENAME                "/zeiten.csv"
@@ -65,29 +75,30 @@ DNSServer dnsServer;
 #define CSV_HEADER                  "Datum;Uhrzeit;BahnI li;BahnI re;BahnII li;BahnII re;"
 
 enum SPIFFS_ERRORS {
-  NO_ERROR             = 0,
-  DELETE_FAILED        = 10,
-  RENAME_FAILED        = 11,
-  FILE_DOES_NOT_EXIST  = 2,
-  RENAME_SUCCESSFUL    = 4,
+  NO_ERROR = 0,
+  DELETE_FAILED = 10,
+  RENAME_FAILED = 11,
+  FILE_DOES_NOT_EXIST = 2,
+  RENAME_SUCCESSFUL = 4,
   SPIFFS_NOT_AVAILABLE = 99
 };
 
-volatile unsigned long startMillis  = 0;
-volatile bool          resetPressed = false;
-volatile bool          startPressed = false;
-uint8_t          activeRunningCount = 0;
-uint8_t      lastActiveRunningCount = 0;
-unsigned long            lastMillis = 0;
-uint8_t                        hupe = 0;
-bool                spiffsAvailable = false;
-bool                      noSaveCSV = false;
+volatile unsigned long startMillis = 0;
+volatile bool resetPressed = false;
+volatile bool timerPressed = false;
+volatile bool startPressed = false;
+uint8_t activeRunningCount = 0;
+uint8_t lastActiveRunningCount = 0;
+unsigned long lastDebugMillis = 0;
+uint8_t hupe = 0;
+bool spiffsAvailable = false;
+bool noSaveCSV = false;
 
 typedef struct {
   volatile unsigned long StopMillis = 0;
-  volatile bool          isRunning  = 0;
-  String                 Headline   = "";
-  bool                   Enabled    = false;
+  volatile bool isRunning = 0;
+  String Headline = "";
+  bool Enabled = false;
 } zielType;
 zielType Ziel[ZIEL_COUNT];
 
@@ -96,26 +107,27 @@ zielType Ziel[ZIEL_COUNT];
 #include "RTC.h"
 #include "File.h"
 #include "LCD.h"
+#include "UDP.h"
 #include "Web.h"
 
 void setup() {
   Serial.begin(57600);
   Serial.println();
   Serial.println("Starte...");
-  pinMode(START_PIN,        INPUT_PULLUP);
-  pinMode(RESET_PIN,        INPUT_PULLUP);
-  pinMode(ZIEL1_STOP_PIN,   INPUT_PULLUP);
+  pinMode(START_PIN, INPUT_PULLUP);
+  pinMode(RESET_PIN, INPUT_PULLUP);
+  pinMode(ZIEL1_STOP_PIN, INPUT_PULLUP);
   pinMode(ZIEL1_ENABLE_PIN, INPUT_PULLUP);
-  pinMode(ZIEL2_STOP_PIN,   INPUT_PULLUP);
+  pinMode(ZIEL2_STOP_PIN, INPUT_PULLUP);
   pinMode(ZIEL2_ENABLE_PIN, INPUT_PULLUP);
-  pinMode(ZIEL3_STOP_PIN,   INPUT_PULLUP);
+  pinMode(ZIEL3_STOP_PIN, INPUT_PULLUP);
   pinMode(ZIEL3_ENABLE_PIN, INPUT_PULLUP);
-  pinMode(ZIEL4_STOP_PIN,   INPUT_PULLUP);
+  pinMode(ZIEL4_STOP_PIN, INPUT_PULLUP);
   pinMode(ZIEL4_ENABLE_PIN, INPUT_PULLUP);
-  pinMode(DELETE_CSV_PIN  , INPUT_PULLUP);
-  pinMode(HUPE_PIN,         OUTPUT);
-  pinMode(STATUS_LED1_PIN,  OUTPUT);
-  pinMode(STATUS_LED2_PIN,  OUTPUT);
+  pinMode(DELETE_CSV_PIN, INPUT_PULLUP);
+  pinMode(HUPE_PIN, OUTPUT);
+  pinMode(STATUS_LED1_PIN, OUTPUT);
+  pinMode(STATUS_LED2_PIN, OUTPUT);
 
   digitalWrite(HUPE_PIN, LOW);
   digitalWrite(STATUS_LED1_PIN, LOW);
@@ -179,7 +191,8 @@ void loop() {
   //prüfen, ob alle Ziele gestoppt wurden
   activeRunningCount = 0;
   for (uint8_t _ziel = 0; _ziel < ZIEL_COUNT; _ziel++)
-    if (Ziel[_ziel].isRunning) activeRunningCount++;
+    if (Ziel[_ziel].isRunning)
+      activeRunningCount++;
 
   //START-Klappe wurde betätigt
   if (startPressed) {
@@ -198,11 +211,19 @@ void loop() {
     }
   }
 
+  //(Countdown)TIMER-Taster wurde gedrückt
+  if (timerPressed) {
+    timerPressed = false;
+    sendUdp(TIMERSTARTCOMMAND);
+  }
+
   //Laufende Zeitmessung
-  if (startMillis > 0)  {
+  if (startMillis > 0) {
     for (uint8_t _ziel = 0; _ziel < ZIEL_COUNT; _ziel++) {
       if (Ziel[_ziel].Enabled) {
-        printLcdTime(_ziel, ((Ziel[_ziel].isRunning) ? millis() : Ziel[_ziel].StopMillis) - startMillis);
+        printLcdTime(_ziel,
+            ((Ziel[_ziel].isRunning) ? millis() : Ziel[_ziel].StopMillis)
+                - startMillis);
       }
     }
   }
@@ -216,9 +237,11 @@ void loop() {
       String csvLine = strRTCDate() + ";" + strRTCTime() + ";";
       for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
         if (Ziel[i].Enabled) {
-          csvLine += ((Ziel[i].StopMillis > 0) ? millis2Anzeige(Ziel[i].StopMillis - startMillis) : "0") + ";";
+          csvLine += (
+              (Ziel[i].StopMillis > 0) ?
+                  millis2Anzeige(Ziel[i].StopMillis - startMillis) : "0") + ";";
         } else {
-          csvLine += millis2Anzeige(0)+";";
+          csvLine += millis2Anzeige(0) + ";";
         }
       }
       writeCSV(CSV_FILENAME, csvLine);
@@ -231,8 +254,8 @@ void loop() {
   checkHupe();
 
   //Debugmeldungen alle 2 Sekunden
-  if (millis() - lastMillis > 2000) {
-    lastMillis = millis();
+  if (millis() - lastDebugMillis > 2000) {
+    lastDebugMillis = millis();
     //Serial.println("Uhrzeit: " + strRTCDateTime());
     //Serial.println(String(activeRunningCount) + " Ziel(en) aktiv");
     //Serial.println("DELETE CSV PIN = "+String(digitalRead(DELETE_CSV_PIN)));

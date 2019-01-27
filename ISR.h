@@ -37,9 +37,14 @@ void IRAM_ATTR isrReset() {
   resetPressed = true;
 }
 
+void IRAM_ATTR isrTimer() {
+  timerPressed = true;
+}
+
 void initISR() {
   attachInterrupt(START_PIN, isrStart, FALLING);
   attachInterrupt(RESET_PIN, isrReset, FALLING);
+  attachInterrupt(TIMER_PIN, isrTimer, FALLING);
   attachInterrupt(ZIEL1_STOP_PIN, isrZiel1Stop, FALLING);
   attachInterrupt(ZIEL2_STOP_PIN, isrZiel2Stop, FALLING);
   attachInterrupt(ZIEL3_STOP_PIN, isrZiel3Stop, FALLING);
