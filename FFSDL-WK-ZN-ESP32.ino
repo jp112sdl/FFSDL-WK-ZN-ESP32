@@ -29,13 +29,10 @@ const char* password = WIFI_PSK;
 #define RESET_PIN        19
 #define TIMER_PIN        36
 
-#define ZIEL1_ENABLE_PIN 34
+#define BAHN2_ENABLE_PIN 27
 #define ZIEL1_STOP_PIN   16
-#define ZIEL2_ENABLE_PIN 39
 #define ZIEL2_STOP_PIN   17
-#define ZIEL3_ENABLE_PIN 26
 #define ZIEL3_STOP_PIN   5
-#define ZIEL4_ENABLE_PIN 27
 #define ZIEL4_STOP_PIN   18
 
 #define BAHN1_INVALID    35
@@ -132,14 +129,11 @@ void setup() {
   pinMode(START_PIN, INPUT_PULLUP);
   pinMode(RESET_PIN, INPUT_PULLUP);
   pinMode(TIMER_PIN, INPUT_PULLUP);
+  pinMode(BAHN2_ENABLE_PIN, INPUT_PULLUP);
   pinMode(ZIEL1_STOP_PIN, INPUT_PULLUP);
-  pinMode(ZIEL1_ENABLE_PIN, INPUT_PULLUP);
   pinMode(ZIEL2_STOP_PIN, INPUT_PULLUP);
-  pinMode(ZIEL2_ENABLE_PIN, INPUT_PULLUP);
   pinMode(ZIEL3_STOP_PIN, INPUT_PULLUP);
-  pinMode(ZIEL3_ENABLE_PIN, INPUT_PULLUP);
   pinMode(ZIEL4_STOP_PIN, INPUT_PULLUP);
-  pinMode(ZIEL4_ENABLE_PIN, INPUT_PULLUP);
   pinMode(DELETE_CSV_PIN, INPUT_PULLUP);
   pinMode(HUPE_PIN, OUTPUT);
   pinMode(STATUS_LED1_PIN, OUTPUT);
@@ -164,10 +158,12 @@ void setup() {
     deleteCSV(CSV_FILENAME, CSV_CREATE_BACKUP_ON_DELETE);
   }
 
-  Ziel[0].Enabled = (digitalRead(ZIEL1_ENABLE_PIN) == LOW);
-  Ziel[1].Enabled = (digitalRead(ZIEL2_ENABLE_PIN) == LOW);
-  Ziel[2].Enabled = (digitalRead(ZIEL3_ENABLE_PIN) == LOW);
-  Ziel[3].Enabled = (digitalRead(ZIEL4_ENABLE_PIN) == LOW);
+  Bahn[0].Enabled = true;
+  Ziel[0].Enabled = true;
+  Ziel[1].Enabled = true;
+  Bahn[1].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
+  Ziel[2].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
+  Ziel[3].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
 
   initRTC();
   initLCD();
@@ -317,7 +313,7 @@ void loop() {
     _cnt++;
     if (_cnt == 4) _cnt = 0;
   }
-
+  delay(1);
 }
 
 void checkHupe() {
