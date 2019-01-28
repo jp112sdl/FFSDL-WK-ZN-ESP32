@@ -34,7 +34,7 @@ input[type=text] {
 }
 
 .tdl {
-  width: 1px;
+  text-align: left;
 }
 
 input.lnkbtn {
@@ -103,6 +103,10 @@ body {
 
 .redbtn {
   background-color: #ff0000;
+} 
+
+.yellowbtn {
+  background-color: #f47d42;
 } 
   
 table {

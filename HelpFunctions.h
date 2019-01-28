@@ -1,5 +1,18 @@
+//
+// 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+//
+
 #ifndef __HELPFUNCTIONS__H_
 #define __HELPFUNCTIONS__H_
+
+void invalidateBahn(uint8_t bahn) {
+  Bahn[bahn - 1].Valid = false;
+
+  Ziel[((bahn - 1) * 2)].isRunning = false;
+  Ziel[((bahn - 1) * 2) + 1].isRunning = false;
+  Ziel[((bahn - 1) * 2)].StopMillis = startMillis;
+  Ziel[((bahn - 1) * 2) + 1].StopMillis = startMillis;
+}
 
 static inline String millis2Anzeige(unsigned long _millis) {
   uint16_t millisekunde = _millis % 1000;

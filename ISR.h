@@ -41,10 +41,20 @@ void IRAM_ATTR isrTimer() {
   timerPressed = true;
 }
 
+void IRAM_ATTR isrBahn1Invalid() {
+  invalidateBahn(1);
+}
+
+void IRAM_ATTR isrBahn2Invalid() {
+  invalidateBahn(2);
+}
+
 void initISR() {
   attachInterrupt(START_PIN, isrStart, FALLING);
   attachInterrupt(RESET_PIN, isrReset, FALLING);
   attachInterrupt(TIMER_PIN, isrTimer, FALLING);
+  attachInterrupt(BAHN1_INVALID, isrBahn1Invalid, FALLING);
+  attachInterrupt(BAHN2_INVALID, isrBahn2Invalid, FALLING);
   attachInterrupt(ZIEL1_STOP_PIN, isrZiel1Stop, FALLING);
   attachInterrupt(ZIEL2_STOP_PIN, isrZiel2Stop, FALLING);
   attachInterrupt(ZIEL3_STOP_PIN, isrZiel3Stop, FALLING);

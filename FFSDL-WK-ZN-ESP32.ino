@@ -20,9 +20,10 @@ TwoWire RTCWire = TwoWire(1);
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PSK;
 
-//#define NOLCD  //nur für Debugging ohne angeschlossene LCD Displays
+#define NOLCD  //nur für Debugging ohne angeschlossene LCD Displays
 
 #define ZIEL_COUNT        4
+#define BAHN_COUNT        2
 
 #define START_PIN        14
 #define RESET_PIN        19
@@ -37,6 +38,9 @@ const char* password = WIFI_PSK;
 #define ZIEL4_ENABLE_PIN 27
 #define ZIEL4_STOP_PIN   18
 
+#define BAHN1_INVALID    35
+#define BAHN2_INVALID    13
+
 #define HUPE_PIN         32
 #define DELETE_CSV_PIN   12
 #define STATUS_LED1_PIN  33
@@ -44,7 +48,8 @@ const char* password = WIFI_PSK;
 
 #define HUPE_DAUER_MS    500
 
-#define TIMERSTARTCOMMAND "timerstart300"
+#define COUNTDOWNTIMER_SECONDS 300
+#define RESULTTIME_SECONDS       5
 
 #define LCD_COLUMNS     16
 #define LCD_ROWS        2
@@ -62,6 +67,7 @@ AsyncWebServer webServer(80);
 DNSServer dnsServer;
 
 #define UDPPORT         112
+#define UDPSENDCOUNT      2
 struct udp_t {
   WiFiUDP UDP;
   char incomingPacket[255];
@@ -83,16 +89,18 @@ enum SPIFFS_ERRORS {
   SPIFFS_NOT_AVAILABLE = 99
 };
 
-volatile unsigned long startMillis = 0;
-volatile bool resetPressed = false;
-volatile bool timerPressed = false;
-volatile bool startPressed = false;
-uint8_t activeRunningCount = 0;
-uint8_t lastActiveRunningCount = 0;
-unsigned long lastDebugMillis = 0;
-uint8_t hupe = 0;
-bool spiffsAvailable = false;
-bool noSaveCSV = false;
+volatile unsigned long startMillis                      = 0;
+volatile bool          resetPressed                     = false;
+volatile bool          timerPressed                     = false;
+volatile bool          startPressed                     = false;
+uint8_t                activeRunningCount               = 0;
+uint8_t                lastActiveRunningCount           = 0;
+uint8_t                hupe                             = 0;
+unsigned long          lastDebugMillis                  = 0;
+unsigned long          lastResultOnLEDPanelChangeMillis = 0;
+bool                   spiffsAvailable                  = false;
+bool                   noSaveCSV                        = false;
+bool                   showResultOnLEDPanel             = false;
 
 typedef struct {
   volatile unsigned long StopMillis = 0;
@@ -101,6 +109,13 @@ typedef struct {
   bool Enabled = false;
 } zielType;
 zielType Ziel[ZIEL_COUNT];
+
+typedef struct {
+  unsigned long SlowestRun = 0;
+  bool Valid = true;
+  bool Enabled = false;
+} bahnType;
+bahnType Bahn[BAHN_COUNT];
 
 #include "HelpFunctions.h"
 #include "ISR.h"
@@ -116,6 +131,7 @@ void setup() {
   Serial.println("Starte...");
   pinMode(START_PIN, INPUT_PULLUP);
   pinMode(RESET_PIN, INPUT_PULLUP);
+  pinMode(TIMER_PIN, INPUT_PULLUP);
   pinMode(ZIEL1_STOP_PIN, INPUT_PULLUP);
   pinMode(ZIEL1_ENABLE_PIN, INPUT_PULLUP);
   pinMode(ZIEL2_STOP_PIN, INPUT_PULLUP);
@@ -128,6 +144,8 @@ void setup() {
   pinMode(HUPE_PIN, OUTPUT);
   pinMode(STATUS_LED1_PIN, OUTPUT);
   pinMode(STATUS_LED2_PIN, OUTPUT);
+  pinMode(BAHN1_INVALID, INPUT_PULLUP);
+  pinMode(BAHN2_INVALID, INPUT_PULLUP);
 
   digitalWrite(HUPE_PIN, LOW);
   digitalWrite(STATUS_LED1_PIN, LOW);
@@ -183,8 +201,15 @@ void loop() {
         printLcdTime(i, 0);
       }
     }
+
+    for (uint8_t i = 0; i < BAHN_COUNT; i++) {
+      Bahn[i].SlowestRun = 0;
+      Bahn[i].Valid = true;
+    }
+    showResultOnLEDPanel = false;
     Serial.println("RESET wurde betätigt!");
     noSaveCSV = true;
+    sendUdp("clear");
     hupe = 4;
   }
 
@@ -200,6 +225,9 @@ void loop() {
     if (activeRunningCount == 0) {
       if (startMillis == 0) {
         startMillis = millis();
+        sendUdp("run");
+        for (uint8_t i = 0; i < BAHN_COUNT; i++)
+          Bahn[i].SlowestRun = 0;
         Serial.println("START wurde betätigt!");
       }
       for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
@@ -214,32 +242,40 @@ void loop() {
   //(Countdown)TIMER-Taster wurde gedrückt
   if (timerPressed) {
     timerPressed = false;
-    sendUdp(TIMERSTARTCOMMAND);
+    if (activeRunningCount == 0) {
+      showResultOnLEDPanel = false;
+      sendUdp("timerstart" + String(COUNTDOWNTIMER_SECONDS));
+    }
   }
 
   //Laufende Zeitmessung
   if (startMillis > 0) {
     for (uint8_t _ziel = 0; _ziel < ZIEL_COUNT; _ziel++) {
       if (Ziel[_ziel].Enabled) {
-        printLcdTime(_ziel,
-            ((Ziel[_ziel].isRunning) ? millis() : Ziel[_ziel].StopMillis)
-                - startMillis);
+        printLcdTime(_ziel, ((Ziel[_ziel].isRunning) ? millis() : Ziel[_ziel].StopMillis) - startMillis);
       }
     }
   }
 
-  // Alle Ziele gestoppt. Jetzt CSV speichern!
+  // Alle Ziele gestoppt. Jetzt Zeit an LED Panel übertragen und CSV speichern!
   if (activeRunningCount == 0 && lastActiveRunningCount > 0) {
     if (noSaveCSV == true) {
       Serial.println("- Fehlstart. CSV wird nicht geschrieben!");
       noSaveCSV = false;
     } else {
+
+      //Langsamstes Ziel je Bahn und gültige Ziele ermitteln
+      for (uint8_t i = 0; i < BAHN_COUNT; i++) {
+        if (Bahn[i].Valid == true)
+          Bahn[i].SlowestRun = _max(Ziel[i * 2].StopMillis - startMillis, Ziel[(i * 2) + 1].StopMillis - startMillis);
+      }
+      showResultOnLEDPanel = true;
+
+
       String csvLine = strRTCDate() + ";" + strRTCTime() + ";";
       for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
         if (Ziel[i].Enabled) {
-          csvLine += (
-              (Ziel[i].StopMillis > 0) ?
-                  millis2Anzeige(Ziel[i].StopMillis - startMillis) : "0") + ";";
+          csvLine += ((Ziel[i].StopMillis > 0) ? millis2Anzeige(Ziel[i].StopMillis - startMillis) : "0") + ";";
         } else {
           csvLine += millis2Anzeige(0) + ";";
         }
@@ -260,6 +296,28 @@ void loop() {
     //Serial.println(String(activeRunningCount) + " Ziel(en) aktiv");
     //Serial.println("DELETE CSV PIN = "+String(digitalRead(DELETE_CSV_PIN)));
   }
+
+  if (showResultOnLEDPanel && activeRunningCount == 0 && (millis() - lastResultOnLEDPanelChangeMillis > RESULTTIME_SECONDS * 1000)) {
+    lastResultOnLEDPanelChangeMillis = millis();
+    static uint8_t _cnt = 0;
+    switch (_cnt) {
+      case 0:
+        sendUdp("bahn1");
+        break;
+      case 1:
+        sendUdp(Bahn[0].Valid ? ("millis" + String(Bahn[0].SlowestRun)) : "clear");
+        break;
+      case 2:
+        sendUdp("bahn2");
+        break;
+      case 3:
+        sendUdp(Bahn[1].Valid ? ("millis" + String(Bahn[1].SlowestRun)) : "clear");
+        break;
+    }
+    _cnt++;
+    if (_cnt == 4) _cnt = 0;
+  }
+
 }
 
 void checkHupe() {

@@ -92,6 +92,27 @@ void defaultHtml(AsyncWebServerRequest *request) {
     resetPressed = (p->value() == "1");
   }
 
+
+  if (request->hasParam("btnBahn1Invalid", true)) {
+    AsyncWebParameter* p = request->getParam("btnBahn1Invalid", true);
+    if (p->value() == "1") invalidateBahn(1);
+  }
+
+  if (request->hasParam("btnBahn2Invalid", true)) {
+    AsyncWebParameter* p = request->getParam("btnBahn2Invalid", true);
+    if (p->value() == "1") invalidateBahn(2);
+  }
+
+  if (request->hasParam("btn5minCountdown", true)) {
+    AsyncWebParameter* p = request->getParam("btn5minCountdown", true);
+    if (p->value() == "1") {
+      if (activeRunningCount == 0) {
+        showResultOnLEDPanel = false;
+        sendUdp("timerstart" + String(COUNTDOWNTIMER_SECONDS));
+      }
+    }
+  }
+
   if (request->hasParam("filename")) {
     if (request->hasArg("download")) {
       Serial.println("Download Filename: " + request->arg("filename"));
@@ -111,6 +132,10 @@ void initWebServer() {
     request->send(200, "text/plain", "rebooting");
     delay(100);
     ESP.restart();
+  });
+
+  webServer.on("/check", HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(200, "text/plain", "ok");
   });
 
   webServer.on("/deletecsv", HTTP_GET, [](AsyncWebServerRequest * request) {

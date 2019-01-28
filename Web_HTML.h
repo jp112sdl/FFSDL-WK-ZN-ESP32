@@ -20,10 +20,29 @@ const char HTTP_DEFAULT[] PROGMEM = R"=====(
       </table>
      </div> 
       <hr />
-      <div><form action="/" method="post">
+      <div>
+        <table>
+          <tr>
+            <td>
+              <form onsubmit="return confirm('Bahn I ungültig?');" action="/" method="post">
+              <button class='redbtn' name='btnBahn1Invalid' value='1' type='submit'>Bahn I ung&uuml;tig?</button></form>
+            </td>
+            <td>
+              <form onsubmit="return confirm('Bahn II ungültig?');" action="/" method="post">
+              <button class='redbtn' name='btnBahn2Invalid' value='1' type='submit'>Bahn II ung&uuml;tig?</button></form>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <hr />
+      <div><form onsubmit="return confirm('Zeiten zurücksetzen?');" action="/" method="post">
       <button class='redbtn' name='btnReset' value='1' type='submit'>Zeit Reset</button></form></div>
       <hr />
-      <div></div>
+      <div><form action="/" method="post">
+      <button class='yellowbtn' name='btn5minCountdown' value='1' type='submit'>5 min. Countdown</button></form></div>
+      <hr />
+      <div>
+      </div>
       <div><input class='lnkbtn' type='button' value='Uhrzeit stellen' onclick="window.location.href='/setTime'" /></div>
       <hr/>
        <div></div>
