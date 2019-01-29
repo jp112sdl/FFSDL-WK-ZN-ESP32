@@ -14,6 +14,12 @@ void invalidateBahn(uint8_t bahn) {
   Ziel[((bahn - 1) * 2) + 1].StopMillis = startMillis;
 }
 
+bool ZieleOK() {
+  bool Bahn1OK = (digitalRead(ZIEL1_STOP_PIN) == HIGH && digitalRead(ZIEL2_STOP_PIN) == HIGH);
+  bool Bahn2OK = (Bahn[1].Enabled == true) ? (digitalRead(ZIEL3_STOP_PIN) == HIGH && digitalRead(ZIEL4_STOP_PIN) == HIGH) : true;
+  return ( Bahn1OK == true && Bahn2OK == true );
+}
+
 static inline String millis2Anzeige(unsigned long _millis) {
   uint16_t millisekunde = _millis % 1000;
   uint8_t sekunde = (_millis / 1000) % 60;
@@ -33,5 +39,20 @@ void blinkStatusLed(uint8_t LED_PIN, uint8_t cnt) {
   }
   delay(300);
   digitalWrite(LED_PIN, LOW);
+}
+
+void checkHupe() {
+  static unsigned long lasteHupeMillis = 0;
+  if (millis() - lasteHupeMillis > HUPE_DAUER_MS) {
+    lasteHupeMillis = millis();
+    if (hupe > 0) {
+      hupe--;
+      digitalWrite(HUPE_PIN, !digitalRead(HUPE_PIN));
+      //Serial.println("HUPE TOGGLE " + String(millis()));
+    } else {
+      digitalWrite(HUPE_PIN, LOW);
+      //Serial.println("HUPE AUS " + String(millis()));
+    }
+  }
 }
 #endif

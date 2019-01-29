@@ -42,11 +42,12 @@ const char* password = WIFI_PSK;
 #define DELETE_CSV_PIN   12
 #define STATUS_LED1_PIN  33
 #define STATUS_LED2_PIN  25
+#define ZIELE_OK_PIN     26
 
 #define HUPE_DAUER_MS    500
 
 #define COUNTDOWNTIMER_SECONDS 300
-#define RESULTTIME_SECONDS       5
+#define RESULTTIME_SECONDS       3
 
 #define LCD_COLUMNS     16
 #define LCD_ROWS        2
@@ -138,12 +139,14 @@ void setup() {
   pinMode(HUPE_PIN, OUTPUT);
   pinMode(STATUS_LED1_PIN, OUTPUT);
   pinMode(STATUS_LED2_PIN, OUTPUT);
+  pinMode(ZIELE_OK_PIN, OUTPUT);
   pinMode(BAHN1_INVALID, INPUT_PULLUP);
   pinMode(BAHN2_INVALID, INPUT_PULLUP);
 
   digitalWrite(HUPE_PIN, LOW);
   digitalWrite(STATUS_LED1_PIN, LOW);
   digitalWrite(STATUS_LED2_PIN, LOW);
+  digitalWrite(ZIELE_OK_PIN, LOW);
 
   if (!SPIFFS.begin(true)) {
     Serial.println("SPIFFS Mount Failed");
@@ -164,6 +167,7 @@ void setup() {
   Bahn[1].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
   Ziel[2].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
   Ziel[3].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
+  Serial.println("Bahn 2 ist" + String((Bahn[1].Enabled == true) ? " " : " nicht ") + "aktiviert");
 
   initRTC();
   initLCD();
@@ -218,20 +222,22 @@ void loop() {
   //START-Klappe wurde betätigt
   if (startPressed) {
     startPressed = false;
-    if (activeRunningCount == 0) {
-      if (startMillis == 0) {
-        startMillis = millis();
-        sendUdp("run");
-        for (uint8_t i = 0; i < BAHN_COUNT; i++)
-          Bahn[i].SlowestRun = 0;
-        Serial.println("START wurde betätigt!");
+    if (ZieleOK() == true) {
+      if (activeRunningCount == 0) {
+        if (startMillis == 0) {
+          startMillis = millis();
+          sendUdp("run");
+          for (uint8_t i = 0; i < BAHN_COUNT; i++)
+            Bahn[i].SlowestRun = 0;
+          Serial.println("START wurde betätigt!");
+        }
+        for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
+          if (Ziel[i].Enabled && Ziel[i].StopMillis == 0)
+            Ziel[i].isRunning = true;
+        }
+        noSaveCSV = false;
+        hupe = 2;
       }
-      for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
-        if (Ziel[i].Enabled && Ziel[i].StopMillis == 0)
-          Ziel[i].isRunning = true;
-      }
-      noSaveCSV = false;
-      hupe = 2;
     }
   }
 
@@ -262,8 +268,10 @@ void loop() {
 
       //Langsamstes Ziel je Bahn und gültige Ziele ermitteln
       for (uint8_t i = 0; i < BAHN_COUNT; i++) {
-        if (Bahn[i].Valid == true)
+        if (Bahn[i].Enabled == true && Bahn[i].Valid == true) {
           Bahn[i].SlowestRun = _max(Ziel[i * 2].StopMillis - startMillis, Ziel[(i * 2) + 1].StopMillis - startMillis);
+          Serial.println("Bahn " + String(i + 1) + " SlowestRun = " + String(Bahn[i].SlowestRun));
+        }
       }
       showResultOnLEDPanel = true;
 
@@ -282,17 +290,7 @@ void loop() {
 
   lastActiveRunningCount = activeRunningCount;
 
-  //Hupe
-  checkHupe();
-
-  //Debugmeldungen alle 2 Sekunden
-  if (millis() - lastDebugMillis > 2000) {
-    lastDebugMillis = millis();
-    //Serial.println("Uhrzeit: " + strRTCDateTime());
-    //Serial.println(String(activeRunningCount) + " Ziel(en) aktiv");
-    //Serial.println("DELETE CSV PIN = "+String(digitalRead(DELETE_CSV_PIN)));
-  }
-
+  //Zeige Zeiten der Bahnen auf LED Panel
   if (showResultOnLEDPanel && activeRunningCount == 0 && (millis() - lastResultOnLEDPanelChangeMillis > RESULTTIME_SECONDS * 1000)) {
     lastResultOnLEDPanelChangeMillis = millis();
     static uint8_t _cnt = 0;
@@ -311,23 +309,23 @@ void loop() {
         break;
     }
     _cnt++;
-    if (_cnt == 4) _cnt = 0;
+    if (_cnt == (Bahn[1].Enabled == true ? 4 : 2)) _cnt = 0;
   }
-  delay(1);
-}
 
-void checkHupe() {
-  static unsigned long lasteHupeMillis = 0;
-  if (millis() - lasteHupeMillis > HUPE_DAUER_MS) {
-    lasteHupeMillis = millis();
-    if (hupe > 0) {
-      hupe--;
-      digitalWrite(HUPE_PIN, !digitalRead(HUPE_PIN));
-      //Serial.println("HUPE TOGGLE " + String(millis()));
-    } else {
-      digitalWrite(HUPE_PIN, LOW);
-      //Serial.println("HUPE AUS " + String(millis()));
-    }
+  //Hupe
+  checkHupe();
+
+  //LED "alle Ziele OK"
+  digitalWrite(ZIELE_OK_PIN, ZieleOK() == true ? HIGH : LOW);
+
+  //Debugmeldungen alle 2 Sekunden
+  if (millis() - lastDebugMillis > 2000) {
+    lastDebugMillis = millis();
+    //Serial.println("Uhrzeit: " + strRTCDateTime());
+    //Serial.println(String(activeRunningCount) + " Ziel(en) aktiv");
+    //Serial.println("DELETE CSV PIN = "+String(digitalRead(DELETE_CSV_PIN)));
   }
+
+  delay(1);
 }
 
