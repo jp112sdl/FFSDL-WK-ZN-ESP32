@@ -27,7 +27,7 @@ const char* password = WIFI_PSK;
 
 #define START_PIN        14
 #define RESET_PIN        19
-#define TIMER_PIN        36
+#define TIMER_PIN        34
 
 #define BAHN2_ENABLE_PIN 27
 #define ZIEL1_STOP_PIN   16
@@ -129,7 +129,7 @@ void setup() {
   Serial.println("Starte...");
   pinMode(START_PIN, INPUT_PULLUP);
   pinMode(RESET_PIN, INPUT_PULLUP);
-  pinMode(TIMER_PIN, INPUT_PULLUP);
+  pinMode(TIMER_PIN, INPUT);
   pinMode(BAHN2_ENABLE_PIN, INPUT_PULLUP);
   pinMode(ZIEL1_STOP_PIN, INPUT_PULLUP);
   pinMode(ZIEL2_STOP_PIN, INPUT_PULLUP);
@@ -140,7 +140,7 @@ void setup() {
   pinMode(STATUS_LED1_PIN, OUTPUT);
   pinMode(STATUS_LED2_PIN, OUTPUT);
   pinMode(ZIELE_OK_PIN, OUTPUT);
-  pinMode(BAHN1_INVALID, INPUT_PULLUP);
+  pinMode(BAHN1_INVALID, INPUT);
   pinMode(BAHN2_INVALID, INPUT_PULLUP);
 
   digitalWrite(HUPE_PIN, LOW);
@@ -299,13 +299,13 @@ void loop() {
         sendUdp("bahn1");
         break;
       case 1:
-        sendUdp(Bahn[0].Valid ? ("millis" + String(Bahn[0].SlowestRun)) : "clear");
+        sendUdp(Bahn[0].Valid ? ("millis" + String(Bahn[0].SlowestRun)) : "ow");
         break;
       case 2:
         sendUdp("bahn2");
         break;
       case 3:
-        sendUdp(Bahn[1].Valid ? ("millis" + String(Bahn[1].SlowestRun)) : "clear");
+        sendUdp(Bahn[1].Valid ? ("millis" + String(Bahn[1].SlowestRun)) : "ow");
         break;
     }
     _cnt++;

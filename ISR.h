@@ -42,11 +42,11 @@ void IRAM_ATTR isrTimer() {
 }
 
 void IRAM_ATTR isrBahn1Invalid() {
-  invalidateBahn(1);
+  if (activeRunningCount > 0) invalidateBahn(1);
 }
 
 void IRAM_ATTR isrBahn2Invalid() {
-  invalidateBahn(2);
+  if (activeRunningCount > 0) invalidateBahn(2);
 }
 
 void initISR() {
