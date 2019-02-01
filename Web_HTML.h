@@ -25,28 +25,26 @@ const char HTTP_DEFAULT[] PROGMEM = R"=====(
           <tr>
             <td>
               <form onsubmit="return confirm('Bahn I ungültig?');" action="/" method="post">
-              <button class='redbtn' name='btnBahn1Invalid' value='1' type='submit'>Bahn I ung&uuml;tig?</button></form>
+              <button class='redbtn' name='btnBahn1Invalid' {disabled}  value='1' type='submit'>Bahn I ung&uuml;tig?</button></form>
             </td>
-            <td>
-              <form onsubmit="return confirm('Bahn II ungültig?');" action="/" method="post">
-              <button class='redbtn' name='btnBahn2Invalid' value='1' type='submit'>Bahn II ung&uuml;tig?</button></form>
-            </td>
+            {tableRowBahn2Invalid}
           </tr>
         </table>
       </div>
       <hr />
       <div><form onsubmit="return confirm('Zeiten zurücksetzen?');" action="/" method="post">
-      <button class='redbtn' name='btnReset' value='1' type='submit'>Zeit Reset</button></form></div>
+      <button class='redbtn' name='btnReset' {disabled} value='1' type='submit'>Zeit Reset</button></form></div>
       <hr />
       <div><form action="/" method="post">
-      <button class='yellowbtn' name='btn5minCountdown' value='1' type='submit'>5 min. Countdown</button></form></div>
+      <button class='yellowbtn' name='btn5minCountdown' {disabled} value='1' type='submit'>5 min. Countdown</button></form></div>
       <hr />
       <div>
       </div>
       <div><input class='lnkbtn' type='button' value='Uhrzeit stellen' onclick="window.location.href='/setTime'" /></div>
       <hr/>
        <div></div>
-      <div><input class='lnkbtn' type='button' value='Download CSV' onclick="window.location.href='/?download&filename=/zeiten.csv'" /></div>
+      <div><input class='lnkbtn' type='button' {disabled} value='Download CSV' onclick="window.location.href='/?download&filename=/zeiten.csv'" /></div>
+      <div><table><tr><td class='tdc'>Login: {userlevel}</td></tr></table></div>
       {js}
     </div>
   </body>

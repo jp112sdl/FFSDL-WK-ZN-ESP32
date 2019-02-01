@@ -37,6 +37,10 @@ input[type=text] {
   text-align: left;
 }
 
+.tdc {
+  text-align: center;
+}
+
 input.lnkbtn {
   -webkit-appearance: button;
   -moz-appearance: button;
