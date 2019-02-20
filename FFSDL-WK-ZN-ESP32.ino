@@ -20,7 +20,7 @@ TwoWire RTCWire = TwoWire(1);
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PSK;
 
-#define NOLCD  //nur für Debugging ohne angeschlossene LCD Displays
+//#define NOLCD  //nur für Debugging ohne angeschlossene LCD Displays
 
 #define ZIEL_COUNT        4
 #define BAHN_COUNT        2
@@ -236,7 +236,7 @@ void loop() {
             Ziel[i].isRunning = true;
         }
         noSaveCSV = false;
-        hupe = 2;
+        //hupe = 2;
       }
     }
   }
