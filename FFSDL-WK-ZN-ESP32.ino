@@ -44,7 +44,7 @@ const char* password = WIFI_PSK;
 #define STATUS_LED2_PIN  25
 #define ZIELE_OK_PIN     26
 
-#define HUPE_DAUER_MS    500
+#define HUPE_DAUER_MS    200
 
 #define COUNTDOWNTIMER_SECONDS 300
 #define RESULTTIME_SECONDS       3
@@ -192,6 +192,7 @@ void loop() {
 
   //RESET Taster wurde betätigt
   if (resetPressed) {
+    delay(500);
     resetPressed = false;
     startMillis = 0;
     for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
@@ -210,7 +211,7 @@ void loop() {
     Serial.println("RESET wurde betätigt!");
     noSaveCSV = true;
     sendUdp("clear");
-    hupe = 4;
+    hupe = 2;
   }
 
   //prüfen, ob alle Ziele gestoppt wurden
@@ -236,13 +237,13 @@ void loop() {
             Ziel[i].isRunning = true;
         }
         noSaveCSV = false;
-        //hupe = 2;
       }
     }
   }
 
   //(Countdown)TIMER-Taster wurde gedrückt
   if (timerPressed) {
+    delay(500);
     timerPressed = false;
     if (activeRunningCount == 0) {
       showResultOnLEDPanel = false;
