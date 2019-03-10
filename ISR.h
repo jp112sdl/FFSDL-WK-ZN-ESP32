@@ -51,8 +51,8 @@ void IRAM_ATTR isrBahn2Invalid() {
 
 void initISR() {
   attachInterrupt(START_PIN, isrStart, FALLING);
-  attachInterrupt(RESET_PIN, isrReset, FALLING);
-  attachInterrupt(TIMER_PIN, isrTimer, FALLING);
+  attachInterrupt(RESET_PIN, isrReset, RISING);
+  attachInterrupt(TIMER_PIN, isrTimer, RISING);
   
   attachInterrupt(BAHN1_INVALID, isrBahn1Invalid, FALLING);
   attachInterrupt(ZIEL1_STOP_PIN, isrZiel1Stop, FALLING);
