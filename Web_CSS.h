@@ -41,7 +41,7 @@ input[type=text] {
   text-align: center;
 }
 
-input.lnkbtn {
+input.lnkbtn, input.greybtn {
   -webkit-appearance: button;
   -moz-appearance: button;
   appearance: button;
@@ -52,6 +52,7 @@ body {
 }
 
 input.lnkbtn,
+input.greybtn,
 button {
   cursor: pointer;
   color: #fff;
@@ -63,7 +64,8 @@ button {
 
 input,
 button,
-input.lnkbtn {
+input.lnkbtn,
+input.greybtn {
   border: 0;
   border-radius: 0.3rem;
 }
@@ -112,6 +114,10 @@ body {
 .yellowbtn {
   background-color: #f47d42;
 } 
+
+input.greybtn {
+  background-color: #777;
+}
   
 table {
   width: 100%;
@@ -120,6 +126,11 @@ table {
 td {
   max-width: 100%;
   font-weight: bold;
+}
+
+.disabled {
+  -webkit-filter: blur(1px);
+  opacity:0.2;
 }
 </style>
 )=====";

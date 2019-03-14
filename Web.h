@@ -46,6 +46,23 @@ void setTimeHtml(AsyncWebServerRequest *request) {
   request->send(200, "text/html", page);
 }
 
+void setBrightnessHtml(AsyncWebServerRequest *request) {
+  String page = FPSTR(HTTP_LEDPANEL_SETBRIGHTNESS);
+  page.replace("{css_style}", FPSTR(HTTP_CSS));
+  page.replace("{js}", FPSTR(HTTP_JS));
+
+  if (request->hasParam("btnBrightnessUp")) {
+    AsyncWebParameter* p = request->getParam("btnBrightnessUp");
+    if (p->value() == "1") sendUdp("brightnessUp",1);
+  }
+  if (request->hasParam("btnBrightnessDown")) {
+    AsyncWebParameter* p = request->getParam("btnBrightnessDown");
+    if (p->value() == "1") sendUdp("brightnessDown",1);
+  }
+  AsyncWebServerResponse *response = request->beginResponse(200);
+  response->addHeader("Content-Length", String(page.length()));
+  request->send(200, "text/html", page);
+}
 
 void getValues(AsyncWebServerRequest *request) {
   String json = "{";
@@ -163,6 +180,7 @@ void initWebServer() {
   });
 
   webServer.on("/setTime", HTTP_GET, setTimeHtml);
+  webServer.on("/setBrightness", HTTP_GET, setBrightnessHtml);
   webServer.on("/getValues", HTTP_GET, getValues);
 
   webServer.onNotFound([](AsyncWebServerRequest * request) {
