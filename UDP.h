@@ -5,14 +5,18 @@
 #ifndef __UDP_H_
 #define __UDP_H_
 
-void sendUdp(String cmd) {
+void sendUdp(String cmd, uint8_t cnt) {
   Serial.println("sendUdp: "+cmd);
-  for (uint8_t i = 0; i < UDPSENDCOUNT; i++) {
+  for (uint8_t i = 0; i < cnt; i++) {
     UDPClient.UDP.beginPacket(LEDPanel_IP, UDPPORT);
     UDPClient.UDP.print(cmd.c_str());
     UDPClient.UDP.endPacket();
-    delay(1);
+    delay(10);
   }
+}
+
+void sendUdp(String cmd) {
+  sendUdp(cmd,UDPSENDCOUNT);
 }
 
 #endif
