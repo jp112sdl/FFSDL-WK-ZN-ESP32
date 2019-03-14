@@ -12,7 +12,7 @@ void invalidateBahn(uint8_t bahn) {
   Ziel[((bahn - 1) * 2) + 1].isRunning = false;
   Ziel[((bahn - 1) * 2)].StopMillis = startMillis;
   Ziel[((bahn - 1) * 2) + 1].StopMillis = startMillis;
-  Serial.print("invalidateBahn");Serial.print(bahn);Serial.println();
+  Serial.print("invalidateBahn"); Serial.print(bahn); Serial.println();
 }
 
 bool ZieleOK() {

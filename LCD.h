@@ -24,7 +24,7 @@ void initLCD() {
       LCD[i].setCursor(0, 0);
       LCD[i].print(Ziel[i].Headline);
       LCD[i].setCursor(0, 1);
-      LCD[i].print(millis2Anzeige(0)+" m:s,ms");
+      LCD[i].print(millis2Anzeige(0) + " m:s,ms");
     }
   }
   Serial.println("LCD Init done.");

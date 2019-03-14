@@ -16,7 +16,7 @@ uint8_t IRAM_ATTR deleteCSV(const char * fileName, bool createBackup) {
             Serial.println(" - created backup of CSV");
             blinkStatusLed(STATUS_LED1_PIN, 5);
             return RENAME_SUCCESSFUL;
-          } else {
+          } else {  
             Serial.println(" - create backup of CSV failed");
             blinkStatusLed(STATUS_LED2_PIN, 10);
             return RENAME_FAILED;

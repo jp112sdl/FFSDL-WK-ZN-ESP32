@@ -53,11 +53,11 @@ void setBrightnessHtml(AsyncWebServerRequest *request) {
 
   if (request->hasParam("btnBrightnessUp")) {
     AsyncWebParameter* p = request->getParam("btnBrightnessUp");
-    if (p->value() == "1") sendUdp("brightnessUp",1);
+    if (p->value() == "1") sendUdp("brightnessUp", 1);
   }
   if (request->hasParam("btnBrightnessDown")) {
     AsyncWebParameter* p = request->getParam("btnBrightnessDown");
-    if (p->value() == "1") sendUdp("brightnessDown",1);
+    if (p->value() == "1") sendUdp("brightnessDown", 1);
   }
   AsyncWebServerResponse *response = request->beginResponse(200);
   response->addHeader("Content-Length", String(page.length()));
@@ -117,7 +117,7 @@ void defaultHtml(AsyncWebServerRequest *request) {
 
     page.replace ("{tableRows}", tableRows);
     page.replace ("{tableRowBahn2Invalid}", tableRowBahn2Invalid);
-    Serial.print("loggedInUserLevel = "); Serial.println(loggedInUserLevel);
+    //Serial.print("loggedInUserLevel = "); Serial.println(loggedInUserLevel);
     page.replace ("{disabled}", (loggedInUserLevel < UL_ADMIN) ? "disabled" : "");
     page.replace ("{userlevel}", (loggedInUserLevel == UL_ADMIN) ? "ADMIN" : "GAST");
 

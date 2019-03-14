@@ -2,6 +2,12 @@
 // 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //
 //34, 35, 36, 39 only input pins
+//ESP32 Dev Module
+//FLash Mode: DOUT
+//CPU 240MHz
+//PSRAM Disabled
+//Flash Size 4Mb(32Mb)
+
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
@@ -208,7 +214,7 @@ void loop() {
       Bahn[i].Valid = true;
     }
     showResultOnLEDPanel = false;
-    Serial.println("RESET wurde betätigt!");
+    Serial.println("RESET wurde betaetigt!");
     noSaveCSV = true;
     sendUdp("clear");
     hupe = 2;
@@ -230,7 +236,7 @@ void loop() {
           sendUdp("run");
           for (uint8_t i = 0; i < BAHN_COUNT; i++)
             Bahn[i].SlowestRun = 0;
-          Serial.println("START wurde betätigt!");
+          Serial.println("START wurde betaetigt!");
         }
         for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
           if (Ziel[i].Enabled && Ziel[i].StopMillis == 0)

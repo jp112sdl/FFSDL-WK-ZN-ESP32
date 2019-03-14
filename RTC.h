@@ -159,7 +159,7 @@ String strRTCDateTime() {
 
 void initRTC() {
   RTCWire.begin(RTC_I2C_SDA_PIN, RTC_I2C_SCL_PIN, 100000);
-  Serial.println("RTC Init done. Time = "+strRTCDateTime());
+  Serial.println("RTC Init done. Time = " + strRTCDateTime());
 }
 
 #endif
