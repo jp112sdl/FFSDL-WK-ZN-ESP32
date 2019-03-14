@@ -40,9 +40,9 @@ const char HTTP_DEFAULT[] PROGMEM = R"=====(
       <hr />
       <div>
       </div>
-      <div><input class='lnkbtn' type='button' value='Uhrzeit stellen' onclick="window.location.href='/setTime'" /></div>
+      <div><input class='lnkbtn {disabled}' type='button' {disabled} value='Uhrzeit stellen' onclick="window.location.href='/setTime'" /></div>
       <hr/>
-      <div><input class='lnkbtn' type='button' value='Helligkeit LED Panel' onclick="window.location.href='/setBrightness'" /></div>
+      <div><input class='lnkbtn {disabled}' type='button' {disabled} value='Helligkeit LED Panel' onclick="window.location.href='/setBrightness'" /></div>
       <hr/>
       <div></div>
       <div><input class='lnkbtn {disabled}' type='button' {disabled} value='Download CSV' onclick="window.location.href='/?download&filename=/zeiten.csv'" /></div>
