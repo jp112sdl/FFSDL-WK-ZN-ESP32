@@ -111,7 +111,7 @@ void defaultHtml(AsyncWebServerRequest *request) {
     if (Bahn[1].Enabled == true) {
       tableRowBahn2Invalid += "<td>";
       tableRowBahn2Invalid += "<form onsubmit=\"return confirm('Bahn II ungültig?'); \" action=\" / \" method=\"post\">";
-      tableRowBahn2Invalid += "<button class='redbtn' name='btnBahn2Invalid' {disabled} value='1' type='submit'>Bahn II ung&uuml;tig?</button></form>";
+      tableRowBahn2Invalid += "<button class='redbtn {disabled}' name='btnBahn2Invalid' {disabled} value='1' type='submit'>Bahn II ung&uuml;tig?</button></form>";
       tableRowBahn2Invalid += "</td>";
     }
 
