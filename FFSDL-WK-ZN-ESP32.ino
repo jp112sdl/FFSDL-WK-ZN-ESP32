@@ -36,8 +36,8 @@ const char* password = WIFI_PSK;
 #define TIMER_PIN        34
 
 #define BAHN2_ENABLE_PIN 27
-#define ZIEL1_STOP_PIN   16
-#define ZIEL2_STOP_PIN   17
+#define ZIEL1_STOP_PIN   36//16
+#define ZIEL2_STOP_PIN   39//17
 #define ZIEL3_STOP_PIN   5
 #define ZIEL4_STOP_PIN   18
 
