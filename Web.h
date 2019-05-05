@@ -53,11 +53,11 @@ void setBrightnessHtml(AsyncWebServerRequest *request) {
 
   if (request->hasParam("btnBrightnessUp")) {
     AsyncWebParameter* p = request->getParam("btnBrightnessUp");
-    if (p->value() == "1") sendUdp("brightnessUp", 1);
+    if (p->value() == "1") sendDataToLEDPanel("brightnessUp", 1);
   }
   if (request->hasParam("btnBrightnessDown")) {
     AsyncWebParameter* p = request->getParam("btnBrightnessDown");
-    if (p->value() == "1") sendUdp("brightnessDown", 1);
+    if (p->value() == "1") sendDataToLEDPanel("brightnessDown", 1);
   }
   AsyncWebServerResponse *response = request->beginResponse(200);
   response->addHeader("Content-Length", String(page.length()));
@@ -142,7 +142,7 @@ void defaultHtml(AsyncWebServerRequest *request) {
       if (p->value() == "1") {
         if (activeRunningCount == 0) {
           showResultOnLEDPanel = false;
-          sendUdp("timerstart" + String(COUNTDOWNTIMER_SECONDS));
+          sendDataToLEDPanel("timerstart" + String(COUNTDOWNTIMER_SECONDS));
         }
       }
     }

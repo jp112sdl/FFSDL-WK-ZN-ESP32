@@ -50,6 +50,9 @@ const char* password = WIFI_PSK;
 #define STATUS_LED2_PIN  25
 #define ZIELE_OK_PIN     26
 
+#define EXTSERIALRX_PIN  2
+#define EXTSERIALTX_PIN  23
+
 #define HUPE_DAUER_MS    200
 
 #define COUNTDOWNTIMER_SECONDS 300
@@ -77,6 +80,12 @@ struct udp_t {
   char incomingPacket[255];
 } UDPClient;
 IPAddress LEDPanel_IP(192, 168, 4, 112);
+
+#define EXTSERIALSENDCOUNT      2
+#define EXTSERIALBAUDRATE       9600
+
+#define USE_LEDPANEL_SERIAL
+
 
 #define WEBPAGE_REFRESH_TIME        "2" //alle x Sekunden wird die Seite aktualisiert
 
@@ -126,11 +135,14 @@ bahnType Bahn[BAHN_COUNT];
 #include "RTC.h"
 #include "File.h"
 #include "LCD.h"
-#include "UDP.h"
+#include "LEDPanelControl.h"
 #include "Web.h"
 
 void setup() {
   Serial.begin(57600);
+#ifdef USE_LEDPANEL_SERIAL
+  Serial1.begin(EXTSERIALBAUDRATE, SERIAL_8N1, EXTSERIALRX_PIN, EXTSERIALTX_PIN);
+#endif
   Serial.println();
   Serial.println("Starte...");
   pinMode(START_PIN, INPUT_PULLUP);
@@ -216,7 +228,7 @@ void loop() {
     showResultOnLEDPanel = false;
     Serial.println("RESET wurde betaetigt!");
     noSaveCSV = true;
-    sendUdp("clear");
+    sendDataToLEDPanel("clear");
     hupe = 2;
   }
 
@@ -233,7 +245,7 @@ void loop() {
       if (activeRunningCount == 0) {
         if (startMillis == 0) {
           startMillis = millis();
-          sendUdp("run");
+          sendDataToLEDPanel("run");
           for (uint8_t i = 0; i < BAHN_COUNT; i++)
             Bahn[i].SlowestRun = 0;
           Serial.println("START wurde betaetigt!");
@@ -253,7 +265,7 @@ void loop() {
     timerPressed = false;
     if (activeRunningCount == 0) {
       showResultOnLEDPanel = false;
-      sendUdp("timerstart" + String(COUNTDOWNTIMER_SECONDS));
+      sendDataToLEDPanel("timerstart" + String(COUNTDOWNTIMER_SECONDS));
     }
   }
 
@@ -303,16 +315,16 @@ void loop() {
     static uint8_t _cnt = 0;
     switch (_cnt) {
       case 0:
-        sendUdp("bahn1");
+        sendDataToLEDPanel("bahn1");
         break;
       case 1:
-        sendUdp(Bahn[0].Valid ? ("millis" + String(Bahn[0].SlowestRun)) : "ow");
+        sendDataToLEDPanel(Bahn[0].Valid ? ("millis" + String(Bahn[0].SlowestRun)) : "ow");
         break;
       case 2:
-        sendUdp("bahn2");
+        sendDataToLEDPanel("bahn2");
         break;
       case 3:
-        sendUdp(Bahn[1].Valid ? ("millis" + String(Bahn[1].SlowestRun)) : "ow");
+        sendDataToLEDPanel(Bahn[1].Valid ? ("millis" + String(Bahn[1].SlowestRun)) : "ow");
         break;
     }
     _cnt++;
