@@ -7,7 +7,9 @@
 
 bool receiveDataFromLEDPanel(char expected) {
   while (Serial1.available() > 0) {
-    char data = Serial.read();
+    uint8_t data = Serial1.read();
+    //Serial.print(">");
+    //Serial.print((char)data);
     if (data == expected) {
       return true;
     }
@@ -30,7 +32,12 @@ void sendExtSerial(String cmd, uint8_t cnt) {
   for (uint8_t i = 0; i < cnt; i++) {
     Serial1.println(cmd);
     delay(100);
-    if (receiveDataFromLEDPanel(0x01)) break;
+    if (receiveDataFromLEDPanel(char(0x31))) {
+      Serial.println("receiveDataFromLEDPanel: response OK");
+      break;
+    } else {
+      Serial.println("receiveDataFromLEDPanel: no response");
+    }
   }
 }
 

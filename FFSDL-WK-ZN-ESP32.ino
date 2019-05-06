@@ -50,7 +50,7 @@ const char* password = WIFI_PSK;
 #define STATUS_LED2_PIN  25
 #define ZIELE_OK_PIN     26
 
-#define EXTSERIALRX_PIN  2
+#define EXTSERIALRX_PIN   2
 #define EXTSERIALTX_PIN  23
 
 #define HUPE_DAUER_MS    200
@@ -202,6 +202,10 @@ void setup() {
   initWebServer();
 
   digitalWrite(STATUS_LED1_PIN, HIGH);
+
+#ifdef USE_LEDPANEL_SERIAL
+  sendDataToLEDPanel("clear");
+#endif
   Serial.println("Ready.");
 }
 
