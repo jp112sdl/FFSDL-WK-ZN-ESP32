@@ -36,10 +36,8 @@ const char* password = WIFI_PSK;
 #define TIMER_PIN        34
 
 #define BAHN2_ENABLE_PIN 27
-#define ZIEL1_STOP_PIN   36//16
-#define ZIEL2_STOP_PIN   39//17
-#define ZIEL3_STOP_PIN   5
-#define ZIEL4_STOP_PIN   18
+
+const uint8_t ZIEL_STOP_PINS[] =  {36, 39, 5, 8};
 
 #define BAHN1_INVALID    35
 #define BAHN2_INVALID    13
@@ -130,9 +128,10 @@ typedef struct {
 } bahnType;
 bahnType Bahn[BAHN_COUNT];
 
+#include "RTC.h"
+#include "Log.h"
 #include "HelpFunctions.h"
 #include "ISR.h"
-#include "RTC.h"
 #include "File.h"
 #include "LCD.h"
 #include "LEDPanelControl.h"
@@ -140,19 +139,19 @@ bahnType Bahn[BAHN_COUNT];
 
 void setup() {
   Serial.begin(57600);
+  initLog();
 #ifdef USE_LEDPANEL_SERIAL
   Serial1.begin(EXTSERIALBAUDRATE, SERIAL_8N1, EXTSERIALRX_PIN, EXTSERIALTX_PIN);
 #endif
-  Serial.println();
-  Serial.println("Starte...");
+  LOG("Starte...");
   pinMode(START_PIN, INPUT_PULLUP);
   pinMode(RESET_PIN, INPUT_PULLUP);
   pinMode(TIMER_PIN, INPUT);
   pinMode(BAHN2_ENABLE_PIN, INPUT_PULLUP);
-  pinMode(ZIEL1_STOP_PIN, INPUT_PULLUP);
-  pinMode(ZIEL2_STOP_PIN, INPUT_PULLUP);
-  pinMode(ZIEL3_STOP_PIN, INPUT_PULLUP);
-  pinMode(ZIEL4_STOP_PIN, INPUT_PULLUP);
+
+  for (uint8_t p=0; p < sizeof(ZIEL_STOP_PINS); p++)
+    pinMode(ZIEL_STOP_PINS[p], INPUT_PULLUP);
+  
   pinMode(DELETE_CSV_PIN, INPUT_PULLUP);
   pinMode(HUPE_PIN, OUTPUT);
   pinMode(STATUS_LED1_PIN, OUTPUT);
@@ -167,12 +166,12 @@ void setup() {
   digitalWrite(ZIELE_OK_PIN, LOW);
 
   if (!SPIFFS.begin(true)) {
-    Serial.println("SPIFFS Mount Failed");
+    LOG("SPIFFS Mount Failed");
     digitalWrite(STATUS_LED2_PIN, HIGH);
     return;
   } else {
     spiffsAvailable = true;
-    Serial.println("SPIFFS Init done.");
+    LOG("SPIFFS Init done.");
   }
 
   if (digitalRead(DELETE_CSV_PIN) == LOW) {
@@ -185,7 +184,7 @@ void setup() {
   Bahn[1].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
   Ziel[2].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
   Ziel[3].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
-  Serial.println("Bahn 2 ist" + String((Bahn[1].Enabled == true) ? " " : " nicht ") + "aktiviert");
+  LOG("Bahn 2 ist" + String((Bahn[1].Enabled == true) ? " " : " nicht ") + "aktiviert");
 
   initRTC();
   initLCD();
@@ -194,8 +193,6 @@ void setup() {
   WiFi.softAP(ssid, password);
 
   IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
 
   dnsServer.start(53, "*", IP);
 
@@ -206,7 +203,7 @@ void setup() {
 #ifdef USE_LEDPANEL_SERIAL
   sendDataToLEDPanel("clear");
 #endif
-  Serial.println("Ready.");
+  LOG("Ready.");
 }
 
 void loop() {
@@ -230,7 +227,7 @@ void loop() {
       Bahn[i].Valid = true;
     }
     showResultOnLEDPanel = false;
-    Serial.println("RESET wurde betaetigt!");
+    LOG("RESET wurde betaetigt!");
     noSaveCSV = true;
     sendDataToLEDPanel("clear");
     hupe = 2;
@@ -252,7 +249,7 @@ void loop() {
           sendDataToLEDPanel("run");
           for (uint8_t i = 0; i < BAHN_COUNT; i++)
             Bahn[i].SlowestRun = 0;
-          Serial.println("START wurde betaetigt!");
+          LOG("START wurde betaetigt!");
         }
         for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
           if (Ziel[i].Enabled && Ziel[i].StopMillis == 0)
@@ -285,7 +282,7 @@ void loop() {
   // Alle Ziele gestoppt. Jetzt Zeit an LED Panel übertragen und CSV speichern!
   if (activeRunningCount == 0 && lastActiveRunningCount > 0) {
     if (noSaveCSV == true) {
-      Serial.println("- Fehlstart. CSV wird nicht geschrieben!");
+      LOG("- Fehlstart. CSV wird nicht geschrieben!");
       noSaveCSV = false;
     } else {
 
@@ -293,7 +290,7 @@ void loop() {
       for (uint8_t i = 0; i < BAHN_COUNT; i++) {
         if (Bahn[i].Enabled == true && Bahn[i].Valid == true) {
           Bahn[i].SlowestRun = _max(Ziel[i * 2].StopMillis - startMillis, Ziel[(i * 2) + 1].StopMillis - startMillis);
-          Serial.println("Bahn " + String(i + 1) + " SlowestRun = " + String(Bahn[i].SlowestRun));
+          LOG("Bahn " + String(i + 1) + " SlowestRun = " + String(Bahn[i].SlowestRun));
         }
       }
       showResultOnLEDPanel = true;
@@ -339,14 +336,14 @@ void loop() {
   checkHupe();
 
   //LED "alle Ziele OK"
-  digitalWrite(ZIELE_OK_PIN, ZieleOK() == true ? HIGH : LOW);
+  digitalWrite(ZIELE_OK_PIN, (ZieleOK() == true && activeRunningCount == 0 && startMillis == 0) ? HIGH : LOW);
 
   //Debugmeldungen alle 2 Sekunden
   if (millis() - lastDebugMillis > 2000) {
     lastDebugMillis = millis();
-    //Serial.println("Uhrzeit: " + strRTCDateTime());
-    //Serial.println(String(activeRunningCount) + " Ziel(en) aktiv");
-    //Serial.println("DELETE CSV PIN = "+String(digitalRead(DELETE_CSV_PIN)));
+    //LOG("Uhrzeit: " + strRTCDateTime());
+    //LOG(String(activeRunningCount) + " Ziel(en) aktiv");
+    //LOG("DELETE CSV PIN = "+String(digitalRead(DELETE_CSV_PIN)));
   }
 
   delay(1);

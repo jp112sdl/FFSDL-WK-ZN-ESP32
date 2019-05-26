@@ -64,13 +64,22 @@ void setBrightnessHtml(AsyncWebServerRequest *request) {
   request->send(200, "text/html", page);
 }
 
+
+void showLog(AsyncWebServerRequest *request) {
+  AsyncWebServerResponse *response = request->beginResponse(200);
+  String page = "";
+  for (uint16_t c = 0; c < logLength; c++) {
+    page += logArray[c] + "<br/>";
+  }
+  response->addHeader("Content-Length", String(page.length()));
+  request->send(200, "text/html", page);
+}
+
 void getValues(AsyncWebServerRequest *request) {
   String json = "{";
   json += "\"uhrzeit\": \"" + strRTCDateTime() + "\"";
 
   json += ", \"ziele\": [";
-
-
   uint8_t j = 0;
   for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
     if (Ziel[i].Enabled) {
@@ -78,8 +87,19 @@ void getValues(AsyncWebServerRequest *request) {
       json += ((j > 1) ? ", \"" : String("\""))  + millis2Anzeige(((Ziel[i].isRunning) ? millis() : Ziel[i].StopMillis) - startMillis) + "\"";
     }
   }
+  json += "]";
 
-  json += "]}";
+  json += ", \"zielstatus\": [";
+  j = 0;
+  for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
+    if (Ziel[i].Enabled) {
+      j++;
+      json += ((j > 1) ? ", \"" : String("\"")) + (ZielOK(i) == true ? "<span style='background-color:#00FF00'>&nbsp;</span>" : "<span style='background-color:#FF0000'>&nbsp;</span>") + "\"";
+    }
+  }
+  json += "]";
+
+  json += "}";
   request->send(200, "text/json", json);
 }
 
@@ -100,6 +120,7 @@ void defaultHtml(AsyncWebServerRequest *request) {
       if (Ziel[i].Enabled) {
         tableRows += "<tr>";
         //tableRows += "<td class='tdl " + String((Ziel[i].isRunning) ? "red" : ((Ziel[i].StopMillis > 0) ? "green" : "black")) + "'>" + Ziel[i].Headline + "</td>";
+        tableRows += "<td id='_statusziel" + String(j) + "' class='tdl'></td>";
         tableRows += "<td class='tdl'>" + Ziel[i].Headline + "</td>";
         tableRows += "<td id='_ziel" + String(j) + "' class='tdr'>" + millis2Anzeige(((Ziel[i].isRunning) ? millis() : Ziel[i].StopMillis) - startMillis) + "</td>";
         tableRows += "</tr>";
@@ -117,7 +138,7 @@ void defaultHtml(AsyncWebServerRequest *request) {
 
     page.replace ("{tableRows}", tableRows);
     page.replace ("{tableRowBahn2Invalid}", tableRowBahn2Invalid);
-    //Serial.print("loggedInUserLevel = "); Serial.println(loggedInUserLevel);
+    //Serial.print("loggedInUserLevel = "); LOG(loggedInUserLevel);
     page.replace ("{disabled}", (loggedInUserLevel < UL_ADMIN) ? "disabled" : "");
     page.replace ("{userlevel}", (loggedInUserLevel == UL_ADMIN) ? "ADMIN" : "GAST");
 
@@ -149,7 +170,7 @@ void defaultHtml(AsyncWebServerRequest *request) {
 
     if (request->hasParam("filename")) {
       if (request->hasArg("download")) {
-        Serial.println("Download Filename: " + request->arg("filename"));
+        LOG("Download Filename: " + request->arg("filename"));
         AsyncWebServerResponse *response = request->beginResponse(SPIFFS, request->arg("filename"), String(), true);
         response->addHeader("Server", "FF SDL Wettkampfzeitnahme");
         request->send(response);
@@ -182,6 +203,7 @@ void initWebServer() {
   webServer.on("/setTime", HTTP_GET, setTimeHtml);
   webServer.on("/setBrightness", HTTP_GET, setBrightnessHtml);
   webServer.on("/getValues", HTTP_GET, getValues);
+  webServer.on("/log", HTTP_GET, showLog);
 
   webServer.onNotFound([](AsyncWebServerRequest * request) {
     if (request->authenticate(WEB_GUEST_USER, WEB_GUEST_PASS)) {
@@ -198,7 +220,7 @@ void initWebServer() {
       defaultHtml(request);
     }
 
-    Serial.print("loggedInUserLevel = "); Serial.println(loggedInUserLevel);
+    LOG("loggedInUserLevel = " + String(loggedInUserLevel));
 
     loggedInUserLevel = UL_NONE;
   });

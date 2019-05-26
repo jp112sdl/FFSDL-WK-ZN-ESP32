@@ -18,7 +18,9 @@ const char HTTP_JS[] PROGMEM = R"=====(
     var i;
     for (i in json_obj.ziele) {
      var element = document.getElementById('_ziel'+i);
+     var statuselement = document.getElementById('_statusziel'+i);
      if (element != null) element.innerHTML = json_obj.ziele[i];
+     if (statuselement != null) statuselement.innerHTML = json_obj.zielstatus[i];
     }
 
     if (rekursiv) setTimeout(function(){ refreshState(true); }, 1000); 

@@ -18,7 +18,7 @@ bool receiveDataFromLEDPanel(char expected) {
 }
 
 void sendUdp(String cmd, uint8_t cnt) {
-  Serial.println("sendUdp: " + cmd);
+  LOG("sendUdp: " + cmd);
   for (uint8_t i = 0; i < cnt; i++) {
     UDPClient.UDP.beginPacket(LEDPanel_IP, UDPPORT);
     UDPClient.UDP.print(cmd.c_str());
@@ -28,15 +28,15 @@ void sendUdp(String cmd, uint8_t cnt) {
 }
 
 void sendExtSerial(String cmd, uint8_t cnt) {
-  Serial.println("sendExtSerial: " + cmd);
+  LOG("sendExtSerial: " + cmd);
   for (uint8_t i = 0; i < cnt; i++) {
     Serial1.println(cmd);
     delay(100);
     if (receiveDataFromLEDPanel(char(0x31))) {
-      Serial.println("receiveDataFromLEDPanel: response OK");
+      LOG("receiveDataFromLEDPanel: response OK");
       break;
     } else {
-      Serial.println("receiveDataFromLEDPanel: no response");
+      LOG("receiveDataFromLEDPanel: no response");
     }
   }
 }

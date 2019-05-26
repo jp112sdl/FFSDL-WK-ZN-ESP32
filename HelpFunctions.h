@@ -12,13 +12,19 @@ void invalidateBahn(uint8_t bahn) {
   Ziel[((bahn - 1) * 2) + 1].isRunning = false;
   Ziel[((bahn - 1) * 2)].StopMillis = startMillis;
   Ziel[((bahn - 1) * 2) + 1].StopMillis = startMillis;
-  Serial.print("invalidateBahn"); Serial.print(bahn); Serial.println();
+  LOG("invalidateBahn"+String(bahn));
 }
 
 bool ZieleOK() {
-  bool Bahn1OK = (digitalRead(ZIEL1_STOP_PIN) == HIGH && digitalRead(ZIEL2_STOP_PIN) == HIGH);
-  bool Bahn2OK = (Bahn[1].Enabled == true) ? (digitalRead(ZIEL3_STOP_PIN) == HIGH && digitalRead(ZIEL4_STOP_PIN) == HIGH) : true;
+  bool Bahn1OK = (digitalRead(ZIEL_STOP_PINS[0]) == HIGH && digitalRead(ZIEL_STOP_PINS[1]) == HIGH);
+  bool Bahn2OK = (Bahn[1].Enabled == true) ? (digitalRead(ZIEL_STOP_PINS[2]) == HIGH && digitalRead(ZIEL_STOP_PINS[3]) == HIGH) : true;
   return ( Bahn1OK == true && Bahn2OK == true );
+}
+
+bool ZielOK(uint8_t num) {
+  bool ok = (digitalRead(ZIEL_STOP_PINS[num]) == HIGH);
+  //LOG("ZielOK("+String(num+1)+") = "+String(ok));
+  return ok;
 }
 
 static inline String millis2Anzeige(unsigned long _millis) {

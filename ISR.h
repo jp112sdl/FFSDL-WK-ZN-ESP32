@@ -55,15 +55,15 @@ void initISR() {
   attachInterrupt(TIMER_PIN, isrTimer, RISING);
 
   attachInterrupt(BAHN1_INVALID, isrBahn1Invalid, FALLING);
-  attachInterrupt(ZIEL1_STOP_PIN, isrZiel1Stop, FALLING);
-  attachInterrupt(ZIEL2_STOP_PIN, isrZiel2Stop, FALLING);
+  attachInterrupt(ZIEL_STOP_PINS[0], isrZiel1Stop, FALLING);
+  attachInterrupt(ZIEL_STOP_PINS[1], isrZiel2Stop, FALLING);
 
 
   if (Bahn[1].Enabled == true) {
     attachInterrupt(BAHN2_INVALID, isrBahn2Invalid, FALLING);
-    attachInterrupt(ZIEL3_STOP_PIN, isrZiel3Stop, FALLING);
-    attachInterrupt(ZIEL4_STOP_PIN, isrZiel4Stop, FALLING);
+    attachInterrupt(ZIEL_STOP_PINS[2], isrZiel3Stop, FALLING);
+    attachInterrupt(ZIEL_STOP_PINS[3], isrZiel4Stop, FALLING);
   }
-  Serial.println("ISR Init done.");
+  LOG("ISR Init done.");
 }
 #endif

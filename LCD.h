@@ -15,7 +15,7 @@ void initLCD() {
   Ziel[3].Headline = ZIEL4_HEADLINE;
 #ifndef NOLCD
   for (uint8_t i = 0; i < ZIEL_COUNT; i++) {
-    Serial.println("Ziel " + String(i + 1) + " " + (Ziel[i].Enabled == true ? "" : "de") + "aktiviert");
+    LOG("Ziel " + String(i + 1) + " " + (Ziel[i].Enabled == true ? "" : "de") + "aktiviert");
     LCD[i].init();
     LCD[i].clear();
     LCD[i].noBacklight();
@@ -27,7 +27,7 @@ void initLCD() {
       LCD[i].print(millis2Anzeige(0) + " m:s,ms");
     }
   }
-  Serial.println("LCD Init done.");
+  LOG("LCD Init done.");
 #endif
 }
 #endif
