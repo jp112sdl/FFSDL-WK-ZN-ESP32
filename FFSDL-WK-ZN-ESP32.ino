@@ -37,7 +37,7 @@ const char* password = WIFI_PSK;
 
 #define BAHN2_ENABLE_PIN 27
 
-const uint8_t ZIEL_STOP_PINS[] =  {36, 39, 5, 8};
+const uint8_t ZIEL_STOP_PINS[] =  {36, 39, 5, 18};
 
 #define BAHN1_INVALID    35
 #define BAHN2_INVALID    13
