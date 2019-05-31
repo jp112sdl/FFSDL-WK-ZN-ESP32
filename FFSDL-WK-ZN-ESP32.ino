@@ -104,6 +104,8 @@ volatile unsigned long startMillis                      = 0;
 volatile bool          resetPressed                     = false;
 volatile bool          timerPressed                     = false;
 volatile bool          startPressed                     = false;
+volatile bool          invalidateBahn1Pressed           = false;
+volatile bool          invalidateBahn2Pressed           = false;
 uint8_t                activeRunningCount               = 0;
 uint8_t                lastActiveRunningCount           = 0;
 uint8_t                hupe                             = 0;
@@ -149,9 +151,9 @@ void setup() {
   pinMode(TIMER_PIN, INPUT);
   pinMode(BAHN2_ENABLE_PIN, INPUT_PULLUP);
 
-  for (uint8_t p=0; p < sizeof(ZIEL_STOP_PINS); p++)
+  for (uint8_t p = 0; p < sizeof(ZIEL_STOP_PINS); p++)
     pinMode(ZIEL_STOP_PINS[p], INPUT_PULLUP);
-  
+
   pinMode(DELETE_CSV_PIN, INPUT_PULLUP);
   pinMode(HUPE_PIN, OUTPUT);
   pinMode(STATUS_LED1_PIN, OUTPUT);
@@ -233,6 +235,17 @@ void loop() {
     hupe = 2;
   }
 
+  //prüfen, ob eine Bahn per Taster ungültig gemacht wurde
+  if (invalidateBahn1Pressed == true) {
+    invalidateBahn1Pressed = false;
+    invalidateBahn(1);
+  }
+
+  if (invalidateBahn2Pressed == true) {
+    invalidateBahn2Pressed = false;
+    invalidateBahn(2);
+  }
+  
   //prüfen, ob alle Ziele gestoppt wurden
   activeRunningCount = 0;
   for (uint8_t _ziel = 0; _ziel < ZIEL_COUNT; _ziel++)

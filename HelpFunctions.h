@@ -6,13 +6,17 @@
 #define __HELPFUNCTIONS__H_
 
 void invalidateBahn(uint8_t bahn) {
-  Bahn[bahn - 1].Valid = false;
+  if (activeRunningCount > 0) {
+    Bahn[bahn - 1].Valid = false;
 
-  Ziel[((bahn - 1) * 2)].isRunning = false;
-  Ziel[((bahn - 1) * 2) + 1].isRunning = false;
-  Ziel[((bahn - 1) * 2)].StopMillis = startMillis;
-  Ziel[((bahn - 1) * 2) + 1].StopMillis = startMillis;
-  LOG("invalidateBahn"+String(bahn));
+    Ziel[((bahn - 1) * 2)].isRunning = false;
+    Ziel[((bahn - 1) * 2) + 1].isRunning = false;
+    Ziel[((bahn - 1) * 2)].StopMillis = startMillis;
+    Ziel[((bahn - 1) * 2) + 1].StopMillis = startMillis;
+    LOG("invalidateBahn" + String(bahn));
+  } else {
+    LOG("invalidateBahn"+ String(bahn)+" -> activeRunningCount=0, nothing to invalidate" );
+  }
 }
 
 bool ZieleOK() {
