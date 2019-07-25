@@ -2,11 +2,12 @@
 // 2018-11-22 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //
 //34, 35, 36, 39 only input pins
-//ESP32 Dev Module
+//ESP32 Wrover Module
 //FLash Mode: DOUT
 //CPU 240MHz
 //PSRAM Disabled
 //Flash Size 4Mb(32Mb)
+//AsyncTCP Commit [ff5c8b2]01db9cf9cea0d62e42d6c1a62dbd4b53d
 
 
 #include <WiFi.h>
