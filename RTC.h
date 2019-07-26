@@ -4,7 +4,6 @@
 #ifndef __RTC__H_
 #define __RTC__H_
 
-int jahr, monat, tag, stunde, minute, sekunde, wochentag;
 int daysInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 bool initRTCdone = false;
 void LOG(String logText);
@@ -70,13 +69,17 @@ void rtcReadTime() {
   RTCWire.write(0);
   RTCWire.endTransmission();
   RTCWire.requestFrom(RTC_I2C_ADDRESS, 7);
-  sekunde    = bcdToDec(RTCWire.read() & 0x7f);
-  minute     = bcdToDec(RTCWire.read());
-  stunde     = bcdToDec(RTCWire.read() & 0x3f);
+  struct tm tm;
+  tm.tm_sec  = bcdToDec(RTCWire.read() & 0x7f);
+  tm.tm_min  = bcdToDec(RTCWire.read());
+  tm.tm_hour = bcdToDec(RTCWire.read() & 0x3f);
   bcdToDec(RTCWire.read());
-  tag        = bcdToDec(RTCWire.read());
-  monat      = bcdToDec(RTCWire.read());
-  jahr       = bcdToDec(RTCWire.read()) + 2000;
+  tm.tm_mday = bcdToDec(RTCWire.read());
+  tm.tm_mon  = bcdToDec(RTCWire.read()); // 0-11 - Note: The month on the DS1307 is 1-12.
+  tm.tm_year = bcdToDec(RTCWire.read()) + 100; // Years since 1900
+  time_t t = mktime(&tm);
+  struct timeval now = { .tv_sec = t };
+  settimeofday(&now, NULL);
 }
 
 void rtcWriteTime(int jahr, int monat, int tag, int stunde, int minute, int sekunde) {
@@ -90,6 +93,7 @@ void rtcWriteTime(int jahr, int monat, int tag, int stunde, int minute, int seku
   RTCWire.write(decToBcd(monat));
   RTCWire.write(decToBcd(jahr - 2000));
   RTCWire.endTransmission();
+  rtcReadTime();
 }
 
 bool rtcSetFromString(char*zeit) {
@@ -118,35 +122,43 @@ bool rtcSetFromString(char*zeit) {
 }
 
 String strRTCDate() {
-  rtcReadTime();
+  time_t now = time(0);
+  tm* localtm = localtime(&now);
   String result = "";
+  int tag = localtm->tm_mday;
   if (tag < 10) {
     result += "0";
   }
   result += tag;
   result += ".";
+  int monat = localtm->tm_mon;
   if (monat < 10) {
     result += "0";
   }
   result += monat;
   result += ".";
+  int jahr = localtm->tm_year + 1900;
   result += jahr;
   return result;
 }
 
 String strRTCTime() {
-  rtcReadTime();
+  time_t now = time(0);
+  tm* localtm = localtime(&now);
   String result = "";
+  int stunde = localtm->tm_hour;
   if (stunde < 10) {
     result += "0";
   }
   result += stunde;
   result += ":";
+  int minute = localtm->tm_min;
   if (minute < 10) {
     result += "0";
   }
   result += minute;
   result += ":";
+  int sekunde = localtm->tm_sec;
   if (sekunde < 10) {
     result += "0";
   }
@@ -160,6 +172,7 @@ String strRTCDateTime() {
 
 void initRTC() {
   RTCWire.begin(RTC_I2C_SDA_PIN, RTC_I2C_SCL_PIN, 100000);
+  rtcReadTime();
   initRTCdone = true;
   LOG("RTC Init done. Time = " + strRTCDateTime());
 }

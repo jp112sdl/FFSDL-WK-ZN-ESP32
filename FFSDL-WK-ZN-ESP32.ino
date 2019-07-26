@@ -168,6 +168,8 @@ void setup() {
   digitalWrite(STATUS_LED2_PIN, LOW);
   digitalWrite(ZIELE_OK_PIN, LOW);
 
+  initRTC();
+
   if (!SPIFFS.begin(true)) {
     LOG("SPIFFS Mount Failed");
     digitalWrite(STATUS_LED2_PIN, HIGH);
@@ -189,7 +191,6 @@ void setup() {
   Ziel[3].Enabled = (digitalRead(BAHN2_ENABLE_PIN) == LOW);
   LOG("Bahn 2 ist" + String((Bahn[1].Enabled == true) ? " " : " nicht ") + "aktiviert");
 
-  initRTC();
   initLCD();
   initISR();
 
