@@ -26,6 +26,7 @@ TwoWire RTCWire = TwoWire(1);
 #include "secrets.h"
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PSK;
+#define AP_CHANNEL 3
 
 //#define NOLCD  //nur für Debugging ohne angeschlossene LCD Displays
 
@@ -194,7 +195,7 @@ void setup() {
   initLCD();
   initISR();
 
-  WiFi.softAP(ssid, password);
+  WiFi.softAP(ssid, password, AP_CHANNEL, 0, 4);
 
   IPAddress IP = WiFi.softAPIP();
 
