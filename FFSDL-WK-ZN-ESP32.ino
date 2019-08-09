@@ -24,9 +24,8 @@ TwoWire RTCWire = TwoWire(1);
 #define RTC_I2C_SDA_PIN  15
 
 #include "secrets.h"
-const char* ssid = WIFI_SSID;
+const char* ssid     = WIFI_SSID;
 const char* password = WIFI_PSK;
-#define AP_CHANNEL 3
 
 //#define NOLCD  //nur für Debugging ohne angeschlossene LCD Displays
 
@@ -134,6 +133,7 @@ bahnType Bahn[BAHN_COUNT];
 
 #include "RTC.h"
 #include "Log.h"
+#include "WiFiSetup.h"
 #include "HelpFunctions.h"
 #include "ISR.h"
 #include "File.h"
@@ -195,7 +195,7 @@ void setup() {
   initLCD();
   initISR();
 
-  WiFi.softAP(ssid, password, AP_CHANNEL, 0, 4);
+  initWiFi();
 
   IPAddress IP = WiFi.softAPIP();
 
@@ -248,7 +248,7 @@ void loop() {
     invalidateBahn2Pressed = false;
     invalidateBahn(2);
   }
-  
+
   //prüfen, ob alle Ziele gestoppt wurden
   activeRunningCount = 0;
   for (uint8_t _ziel = 0; _ziel < ZIEL_COUNT; _ziel++)
